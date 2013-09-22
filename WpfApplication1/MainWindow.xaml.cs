@@ -15,9 +15,7 @@ using System.Windows.Shapes;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
-
-
-
+using Leap;
 
 namespace WpfApplication1
 {
@@ -28,6 +26,7 @@ namespace WpfApplication1
     /// </summary>
     public partial class MainWindow : Window
     {
+        FloatingOSDWindow osd1 = new FloatingOSDWindow();
 
         [DllImport("user32.dll")]
         static extern int RedrawWindow(IntPtr hWnd, [In] ref RECT lprcUpdate, IntPtr hrgnUpdate, uint flags);
@@ -142,12 +141,31 @@ namespace WpfApplication1
 
             InitializeComponent();
 
+            // Create a sample listener and controller
+            LeapListener listener = new LeapListener();
+            Controller controller = new Controller();
+
+
+            // Have the sample listener receive events from the controller
+            controller.AddListener(listener);
+
+            listener.OnFrame(controller);
+
+
+            // Keep this process running until Enter is pressed
+            Console.WriteLine("Press Enter to quit...");
+            Console.ReadLine();
+
+            // Remove the sample listener when done
+            controller.RemoveListener(listener);
+            controller.Dispose();
+
             System.Windows.Forms.Timer _timer = new Timer() { Interval = 1, Enabled = true };
 
             _timer.Tick += new EventHandler(Timer_Tick);
 
-            
         }
+
 
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -169,14 +187,18 @@ namespace WpfApplication1
 
                 //g.DrawEllipse(Pens.Black, pt.X - 10, pt.Y - 10, 20, 20);
 
-                g.DrawEllipse(Pens.Black, rect);
+                //g.DrawEllipse(Pens.Black, rect);
 
                 //g.Dispose();
 
                 RECT rc = new RECT(pt.X - 50, pt.Y - 50, pt.X + 50, pt.Y + 50);
 
-                RedrawWindow(IntPtr.Zero, ref rc, IntPtr.Zero, 0x0400/*RDW_FRAME*/ | 0x0100/*RDW_UPDATENOW*/| 0x0001/*RDW_INVALIDATE*/);
-                
+                //RedrawWindow(IntPtr.Zero, ref rc, IntPtr.Zero, 0x0400/*RDW_FRAME*/ | 0x0100/*RDW_UPDATENOW*/| 0x0001/*RDW_INVALIDATE*/);
+
+                osd1.Show(new System.Drawing.Point(pt.X - 25, pt.Y - 23), 155, System.Drawing.Color.Lime,
+    new Font("Wingdings", 26f, System.Drawing.FontStyle.Regular),
+                 500, FloatingWindow.AnimateMode.ExpandCollapse,
+                 370, "l");
             }
 
         }
