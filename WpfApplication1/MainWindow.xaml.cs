@@ -15,7 +15,9 @@ using System.Windows.Shapes;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Reflection;
 using Leap;
+
 
 namespace WpfApplication1
 {
@@ -129,6 +131,12 @@ namespace WpfApplication1
         }
 
 
+            //Create a sample listener and controller
+            LeapListener listener = new LeapListener();
+            Controller controller = new Controller();
+
+
+
         public MainWindow()
         {
 
@@ -138,40 +146,50 @@ namespace WpfApplication1
             //System.Windows.Forms.Cursor.Clip = 
             //this.Cursor = new System.Windows.Input.Cursor("C:\\Myhand.cur");
 
+            /*
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
+            {
+                string resourceName = new AssemblyName(args.Name).Name + ".dll";
+                string resource = Array.Find(this.GetType().Assembly.GetManifestResourceNames(), element => element.EndsWith(resourceName));
+
+                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
+                {
+                    Byte[] assemblyData = new Byte[stream.Length];
+                    stream.Read(assemblyData, 0, assemblyData.Length);
+                    return Assembly.Load(assemblyData);
+                }
+            };
+             */
 
             InitializeComponent();
 
-            // Create a sample listener and controller
-            LeapListener listener = new LeapListener();
-            Controller controller = new Controller();
-
-
-            // Have the sample listener receive events from the controller
-            controller.AddListener(listener);
-
-            listener.OnFrame(controller);
-
 
             // Keep this process running until Enter is pressed
-            Console.WriteLine("Press Enter to quit...");
-            Console.ReadLine();
+           // Console.WriteLine("Press Enter to quit...");
+            //Console.ReadLine();
 
             // Remove the sample listener when done
-            controller.RemoveListener(listener);
-            controller.Dispose();
+            //controller.RemoveListener(listener);
+            //controller.Dispose();
+
 
             System.Windows.Forms.Timer _timer = new Timer() { Interval = 1, Enabled = true };
 
-            _timer.Tick += new EventHandler(Timer_Tick);
+
+//            _timer.Tick += (sender,e) => Timer_Tick(sender,e,listener,controller);
+            _timer.Tick += (sender, e) => Timer_Tick(sender, e);
+
 
         }
 
 
-
+//        private void Timer_Tick(object sender, EventArgs e, LeapListener listener, Controller controller)
         private void Timer_Tick(object sender, EventArgs e)
         {
             using (Graphics g = Graphics.FromHwnd(IntPtr.Zero))
             {
+
+
                 //System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.Hand;
                 
                 //g.Clear(System.Drawing.Color.Transparent);
@@ -183,7 +201,10 @@ namespace WpfApplication1
                 //myrect.point = new System.Windows.Point(pt.X - 10, pt.Y - 10);
                 //myrect.size = new System.Windows.Size(20, 20);
 
-                System.Drawing.Rectangle rect = new System.Drawing.Rectangle(new System.Drawing.Point(pt.X - 10, pt.Y - 10), new System.Drawing.Size(20, 20));
+                // Have the sample listener receive events from the controller
+                controller.AddListener(listener);
+
+                //System.Drawing.Rectangle rect = new System.Drawing.Rectangle(new System.Drawing.Point(pt.X - 10, pt.Y - 10), new System.Drawing.Size(20, 20));
 
                 //g.DrawEllipse(Pens.Black, pt.X - 10, pt.Y - 10, 20, 20);
 
@@ -191,14 +212,45 @@ namespace WpfApplication1
 
                 //g.Dispose();
 
-                RECT rc = new RECT(pt.X - 50, pt.Y - 50, pt.X + 50, pt.Y + 50);
+                //RECT rc = new RECT(pt.X - 50, pt.Y - 50, pt.X + 50, pt.Y + 50);
 
                 //RedrawWindow(IntPtr.Zero, ref rc, IntPtr.Zero, 0x0400/*RDW_FRAME*/ | 0x0100/*RDW_UPDATENOW*/| 0x0001/*RDW_INVALIDATE*/);
 
-                osd1.Show(new System.Drawing.Point(pt.X - 25, pt.Y - 23), 155, System.Drawing.Color.Lime,
+                //X-position of leap cursor
+                
+                Leap.Vector leapVec = listener.trackLeapCursor(controller);
+                int LeapX = 0;
+                int LeapY = 0;
+
+                if (leapVec != null)
+                {
+//                    LeapX = (int)leapVec.x + 700;
+//                    LeapY = (int)-leapVec.y + 300;
+
+                    LeapX = (int)leapVec.x;
+                    LeapY = (int)leapVec.y - 50;
+                }
+
+
+
+/*                osd1.ShowLeap(155, System.Drawing.Color.Lime,
     new Font("Wingdings", 26f, System.Drawing.FontStyle.Regular),
                  500, FloatingWindow.AnimateMode.ExpandCollapse,
                  370, "l");
+*/
+                
+                osd1.Show(new System.Drawing.Point(LeapX, LeapY), 155, System.Drawing.Color.Lime,
+    new Font("Wingdings", 26f, System.Drawing.FontStyle.Regular),
+                 500, FloatingWindow.AnimateMode.ExpandCollapse,
+                 370, "l");
+
+                 
+                /*
+                osd1.Show(new System.Drawing.Point(pt.X - 10, pt.Y - 10), 155, System.Drawing.Color.Lime,
+    new Font("Wingdings", 26f, System.Drawing.FontStyle.Regular),
+                 500, FloatingWindow.AnimateMode.ExpandCollapse,
+                 370, "l");
+                 */
             }
 
         }

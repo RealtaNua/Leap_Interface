@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Reflection;
 using System.Windows.Forms;
+using Leap;
 
 namespace WpfApplication1
 {
@@ -20,6 +21,12 @@ namespace WpfApplication1
         private GraphicsPath _gp;
         #endregion
 
+        // Create a sample listener and controller
+        //LeapListener listener = new LeapListener();
+        //Controller controller = new Controller();
+
+
+
         #region Public Methods
         /// <summary>
         /// Show given text on OSD-window
@@ -32,8 +39,24 @@ namespace WpfApplication1
         /// <param name="mode">Effect to be applied. Work only if <c>time</c> greater than 0</param>
         /// <param name="time">Time, in milliseconds, for effect playing. If this equal to 0 <c>mode</c> ignored and text showed at once</param>
         /// <param name="text">Text to display</param>
-        public void Show(Point pt, byte alpha, Color textColor, Font textFont, int showTimeMSec,  AnimateMode mode, uint time, string text)
+/*
+    public void ShowLeap(byte alpha, Color textColor, Font textFont, int showTimeMSec,  AnimateMode mode, uint time, string text)
         {
+            // Have the sample listener receive events from the controller
+            controller.AddListener(listener);
+
+            Leap.Vector leapVec = listener.trackLeapCursor(controller);
+            int LeapX = 0;
+            int LeapY = 0;
+
+            if (leapVec != null)
+            {
+                LeapX = (int)leapVec.x + 700;
+                LeapY = (int)-leapVec.y + 300;
+            }
+
+            Point pt = new System.Drawing.Point(LeapX, LeapY);
+
             if(this._viewClock!=null)
             {
                 _viewClock.Stop();
@@ -45,7 +68,7 @@ namespace WpfApplication1
             this._mode = mode;
             this._time = time;
             SizeF textArea;
-            this._rScreen = Screen.PrimaryScreen.Bounds;
+            this._rScreen = System.Windows.Forms.Screen.PrimaryScreen.Bounds;
             if(this._stringFormat == null)
             {
                 this._stringFormat = new StringFormat();
@@ -68,6 +91,46 @@ namespace WpfApplication1
             _viewClock.Interval = showTimeMSec;
             _viewClock.Start();
         }
+*/
+        public void Show(Point pt, byte alpha, Color textColor, Font textFont, int showTimeMSec, AnimateMode mode, uint time, string text)
+        {
+
+            if (this._viewClock != null)
+            {
+                _viewClock.Stop();
+                _viewClock.Dispose();
+            }
+            this._brush = new SolidBrush(textColor);
+            this._textFont = textFont;
+            this._text = text;
+            this._mode = mode;
+            this._time = time;
+            SizeF textArea;
+            this._rScreen = System.Windows.Forms.Screen.PrimaryScreen.Bounds;
+            if (this._stringFormat == null)
+            {
+                this._stringFormat = new StringFormat();
+                this._stringFormat.Alignment = StringAlignment.Near;
+                this._stringFormat.LineAlignment = StringAlignment.Near;
+                this._stringFormat.Trimming = StringTrimming.EllipsisWord;
+            }
+            using (Bitmap bm = new Bitmap(base.Width, base.Height))
+            using (Graphics fx = Graphics.FromImage(bm))
+                textArea = fx.MeasureString(text, textFont, this._rScreen.Width, this._stringFormat);
+            base.Location = pt;
+            base.Alpha = alpha;
+            base.Size = new Size((int)Math.Ceiling(textArea.Width), (int)Math.Ceiling(textArea.Height));
+            if (time > 0)
+                base.ShowAnimate(mode, time);
+            else
+                base.Show();
+            _viewClock = new System.Windows.Forms.Timer();
+            _viewClock.Tick += new System.EventHandler(viewTimer);
+            _viewClock.Interval = showTimeMSec;
+            _viewClock.Start();
+        }
+
+
         #endregion
 
         #region Overrided Drawing & Path Creation

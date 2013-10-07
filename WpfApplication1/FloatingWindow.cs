@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.ComponentModel;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+//using Leap;
 
 namespace WpfApplication1
 {
@@ -92,9 +93,45 @@ namespace WpfApplication1
 			}
 		}
 		#endregion
+/*
+        #region == Leap Controller ==
+        /// <summary>
+        /// Creates the Leap Listener and Controller. 
+        /// </summary>
+        public virtual void StartLeap()
+        {
+            // Create a sample listener and controller
+            LeapListener listener = new LeapListener();
+            Controller controller = new Controller();
 
-		#region == Show / Hide ==
-		/// <summary>
+            // Have the sample listener receive events from the controller
+            controller.AddListener(listener);
+
+        }
+
+        /// <summary>
+        /// Sets the position for the leap controller as a Point object. 
+        /// </summary>
+        public virtual Point SetLeapPosition(LeapListener listener,Controller controller)
+        {
+            Leap.Vector leapVec = listener.trackLeapCursor(controller);
+            int LeapX = 0;
+            int LeapY = 0;
+
+            if (leapVec != null)
+            {
+                LeapX = (int)leapVec.x + 700;
+                LeapY = (int)-leapVec.y + 300;
+            }
+
+            Point pt = new System.Drawing.Point(LeapX, LeapY);
+
+            return pt;
+        }
+        #endregion
+*/
+        #region == Show / Hide ==
+        /// <summary>
 		/// Shows the window. Position determined by Location property in screen coordinates
 		/// </summary>
 		public virtual void Show()
