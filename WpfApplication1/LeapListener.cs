@@ -10,6 +10,7 @@ using System.Threading;
 using System.Reflection;
 using Leap;
 
+
 namespace WpfApplication1
 {
 
@@ -56,10 +57,10 @@ namespace WpfApplication1
             // Get the most recent frame and report some basic information
             Frame frame = controller.Frame();
 
-            SafeWriteLine("Frame id: " + frame.Id
-                        + ", timestamp: " + frame.Timestamp
-                        + ", hands: " + frame.Hands.Count
-                        + ", fingers: " + frame.Fingers.Count);
+//            SafeWriteLine("Frame id: " + frame.Id
+//                        + ", timestamp: " + frame.Timestamp
+//                        + ", hands: " + frame.Hands.Count
+//                        + ", fingers: " + frame.Fingers.Count);
 //                        + ", tools: " + frame.Tools.Count
 //                       + ", gestures: " + frame.Gestures().Count);
 
@@ -75,8 +76,8 @@ namespace WpfApplication1
                     
                     finger_Pos = getFingerVector(controller,fingers.Rightmost);
                     
-                    SafeWriteLine("Device sees " + fingers.Count
-                                + " finger(s), cursor finger position: " + finger_Pos);
+//                    SafeWriteLine("Device sees " + fingers.Count
+//                                + " finger(s), cursor finger position: " + finger_Pos);
                 }
                 /*
                 if (!frame.Hands.Empty)
@@ -178,6 +179,17 @@ namespace WpfApplication1
         /********************************* Custom Methods ***********************************/
         public static Vector last_position = Vector.Zero;
         public static long last_frame_Id = 0;
+        public static string action_type = "normal";
+
+        public void set_action_type(string action)
+        {
+            action_type = action;
+        }
+
+        public string get_action_type()
+        {
+            return action_type;
+        }
 
         public Boolean IsAMatch(Vector new_position,Vector last_known_position)
         {
@@ -193,6 +205,20 @@ namespace WpfApplication1
             return is_a_match;
         }
 
+        public Vector getStabilizedVector(Vector cursor_position)
+        {
+
+            if (last_position.x != 0 || last_position.y != 0)
+            {
+                if (IsAMatch(cursor_position, last_position))
+                {
+                    cursor_position.x = (cursor_position.x + last_position.x) / 2;
+                    cursor_position.y = (cursor_position.y + last_position.y) / 2;
+                }
+            }
+                return cursor_position;
+        }
+
         public Vector getFingerVector(Controller controller, Finger finger)
         {
             Vector finger_vector = new Vector();
@@ -203,18 +229,38 @@ namespace WpfApplication1
 
             if (screen != null && screen.IsValid)
             {
-                var xScreenIntersect = screen.Intersect(finger, true).x;
-                var yScreenIntersect = screen.Intersect(finger, true).y;
-
+                Vector screenStabilized = screen.Intersect(finger, true);
+                var xScreenIntersect = screenStabilized.x;
+                var yScreenIntersect = screenStabilized.y;
+                
                 if (xScreenIntersect.ToString() != "NaN")
                 {
                     finger_vector.x = (int)(xScreenIntersect * screen.WidthPixels);
-                    finger_vector.y = (int)(screen.HeightPixels - (yScreenIntersect * screen.HeightPixels));
+                    finger_vector.y = (int)(screen.HeightPixels - (yScreenIntersect * 2 * screen.HeightPixels));
                 }
-
+                //SafeWriteLine("yScreenIntersect / HeightPixels" + "/" + yScreenIntersect + "/" + screen.HeightPixels);
             }
 
             return finger_vector;
+        }
+
+        public int leftHandFingers(FingerList fingers, Finger cursor_finger)
+        {
+            int fingers_on_left_hand = 0;
+
+            foreach(Finger finger in fingers)
+            {
+                if (!finger.Equals(cursor_finger))
+                {
+                    float x_diff = cursor_finger.TipPosition.x - finger.TipPosition.x;
+                    if (x_diff > 5)
+                    {
+                        fingers_on_left_hand += 1;
+                    }
+                }
+            }
+
+            return fingers_on_left_hand;
         }
 
         public Vector trackLeapCursor(Controller controller)
@@ -222,8 +268,45 @@ namespace WpfApplication1
             // Get the most recent frame and report some basic information
             Frame frame = controller.Frame();
             Vector cursor_position = Vector.Zero;
+            Boolean cursor_is_tapped = false;
+            //int framecounter = 0;
 
             //SafeWriteLine("last_frame_id_before: " + last_frame_Id);
+
+            controller.EnableGesture(Leap.Gesture.GestureType.TYPEKEYTAP);
+            
+            // Get gestures
+    		GestureList gestures = frame.Gestures ();
+            if (
+                controller.Config.SetFloat("Gesture.KeyTap.MinDownVelocity", 30.0f)
+                && controller.Config.SetFloat("Gesture.KeyTap.HistorySeconds", 0.2f)
+                && controller.Config.SetFloat("Gesture.KeyTap.MinDistance", 0.5f)
+            )
+            {
+                controller.Config.Save();
+            }
+
+            if (gestures.Count > 0)
+            {
+                for (int i = 0; i < gestures.Count; i++)
+                {
+                    Gesture gesture = gestures[i];
+
+                    switch (gesture.Type)
+                    {
+                        case Gesture.GestureType.TYPEKEYTAP:
+
+                            cursor_is_tapped = true;
+
+                            KeyTapGesture keytap = new KeyTapGesture(gesture);
+                            SafeWriteLine("Tap id: " + keytap.Id
+                                       + ", " + keytap.State
+                                       + ", position: " + keytap.Position
+                                       + ", direction: " + keytap.Direction);
+                            break;
+                    }
+                }
+            }
 
             if (!frame.Fingers.Empty)
             {
@@ -248,51 +331,56 @@ namespace WpfApplication1
                     else if (is_matched)
                     {
                         cursor_position = tmp_cursor_position;
-                    }
+                    } 
 
 
-
-                    if (fingers.Count == 1)
+                    if (fingers.Count > 1 && is_matched)
                     {
-                        //cursor_position = getFingerVector(controller,fingers.Rightmost);
-
-                        // Calculate the hand's average finger tip position
-                        //cursor_position = fingers.Leftmost.TipPosition;
-                        /*
-                        foreach (Finger finger in fingers)
-                        {
-                            avgPos += finger.TipPosition;
-                        }
-                        avgPos /= fingers.Count;
-                        */
-
-                    }
-                    else if (fingers.Count == 2 && is_matched)
-                    {
+                        int triggerFingers = leftHandFingers(frame.Fingers,fingers.Rightmost);
                         //cursor_position = getFingerVector(controller,fingers.Rightmost);
 
                         //cursor_position = fingers.Rightmost.TipPosition;
-                        
-                        if (IsAMatch(cursor_position, last_position) && (frame.Id - last_frame_Id > 5))
+                        SafeWriteLine("Frame id: " + frame.Id + ", last_frame_id:" + last_frame_Id);
+
+                        if (frame.Id - last_frame_Id > 10 && (get_action_type() == "normal"))
                         {
-                            //SafeWriteLine("Inside is_a_match");
-                            int LeapX = 0; 
+                            int LeapX = 0;
                             int LeapY = 0;
 
-//                            LeapX = (int)cursor_position.x + 745;
-//                            LeapY = (int)-cursor_position.y + 333;
+//                            LeapX = (int)cursor_position.x + 30;
+//                            LeapY = (int)cursor_position.y + 20;
 
-                            LeapX = (int)cursor_position.x + 36;
-                            LeapY = (int)cursor_position.y + 5;
+                            LeapX = (int)cursor_position.x + 20;
+                            LeapY = (int)cursor_position.y + 20;
+
+                            switch (triggerFingers)
+                            {
+                                case 1:
+                                    MouseInput.LeftClick(LeapX, LeapY);
+                                    if (get_action_type() == "normal")
+                                    {
+                                        set_action_type("left_click");
+                                    }
+                                    last_frame_Id = frame.Id;
+                                    break;
+
+                                case 2:
+                                    MouseInput.RightClick(LeapX, LeapY);
+                                    if (get_action_type() == "normal" || get_action_type() == "left_click")
+                                    {
+                                        set_action_type("right_click");
+                                    }
+                                    last_frame_Id = frame.Id;
+                                    break;
+
+                            } //End Switch
+                        }//End If Frame >10
+                    }else if(frame.Id - last_frame_Id > 10 && get_action_type() != "normal")
+                    {
+                        set_action_type("normal");
+                    }// End fingers.count > 1
 
 
-                            MouseInput.LeftClick(LeapX, LeapY);
-
-                            last_frame_Id = frame.Id;
-
-                        }
-
-                    }
 
                     last_position = cursor_position;
                 }
@@ -304,26 +392,12 @@ namespace WpfApplication1
 
            // SafeWriteLine("last_frame_id_after: " + last_frame_Id);
 
+            if (cursor_position.y > 735)
+                cursor_position.y = 735;
+
             return cursor_position;
         }
-        /*
-        public LeapListener()
-        {
-            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
-            {
-                string resourceName = new AssemblyName(args.Name).Name + ".dll";
-                string resource = Array.Find(this.GetType().Assembly.GetManifestResourceNames(), element => element.EndsWith(resourceName));
 
-                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
-                {
-                    Byte[] assemblyData = new Byte[stream.Length];
-                    stream.Read(assemblyData, 0, assemblyData.Length);
-                    return Assembly.Load(assemblyData);
-                }
-            };
-
-        }
-        */
     }
 
 }    

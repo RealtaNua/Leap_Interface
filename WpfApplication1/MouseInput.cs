@@ -13,18 +13,45 @@ namespace WpfApplication1
 {
         public class MouseInput
         {
+            //This is a replacement for Cursor.Position in WinForms
+            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            static extern bool SetCursorPos(int x, int y);
+
+            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
+            
+            public const int MOUSEEVENTF_LEFTDOWN = 0x02;
+            public const int MOUSEEVENTF_LEFTUP = 0x04;
+
+            /* Custom by CS */
+            public static void DragAndDrop(int x, int y)
+            {
+                DoMouse(NativeMethods.MOUSEEVENTF.MOVE | NativeMethods.MOUSEEVENTF.ABSOLUTE, new System.Drawing.Point(x, y));
+                DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(x, y));
+                DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(x, y));                
+            }
+
+            public static void LeftClick(int x, int y)
+            {
+                SetCursorPos(x, y);
+                mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
+                mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+            }
+
+/*
+public static void LeftClick(int x, int y)
+{
+    DoMouse(NativeMethods.MOUSEEVENTF.MOVE | NativeMethods.MOUSEEVENTF.ABSOLUTE, new System.Drawing.Point(x, y));
+    DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(x, y));
+    DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(x, y));
+}
+*/
             public static void LeftClick()
             {
                 DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(0, 0));
                 DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(0, 0));
             }
 
-            public static void LeftClick(int x, int y)
-            {
-                DoMouse(NativeMethods.MOUSEEVENTF.MOVE | NativeMethods.MOUSEEVENTF.ABSOLUTE, new System.Drawing.Point(x, y));
-                DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(x, y));
-                DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(x, y));
-            }
 
             public static void ClickBoundingRectangleByPercentage(int xPercentage, int yPercentage, System.Drawing.Rectangle bounds)
             {
@@ -44,7 +71,7 @@ namespace WpfApplication1
 
             public static void RightClick(int x, int y)
             {
-                DoMouse(NativeMethods.MOUSEEVENTF.MOVE | NativeMethods.MOUSEEVENTF.ABSOLUTE, new System.Drawing.Point(x, y));
+                //DoMouse(NativeMethods.MOUSEEVENTF.MOVE | NativeMethods.MOUSEEVENTF.ABSOLUTE, new System.Drawing.Point(x, y));
                 DoMouse(NativeMethods.MOUSEEVENTF.RIGHTDOWN, new System.Drawing.Point(x, y));
                 DoMouse(NativeMethods.MOUSEEVENTF.RIGHTUP, new System.Drawing.Point(x, y));
             }

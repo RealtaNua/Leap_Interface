@@ -9,7 +9,7 @@ namespace WpfApplication1
 {
 
 
-
+    
     public class NativeMethods
     {
         [DllImport("user32.dll", SetLastError = true)]
