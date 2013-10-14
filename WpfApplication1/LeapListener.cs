@@ -11,6 +11,7 @@ using System.Reflection;
 using Leap;
 
 
+
 namespace WpfApplication1
 {
 
@@ -79,97 +80,7 @@ namespace WpfApplication1
 //                    SafeWriteLine("Device sees " + fingers.Count
 //                                + " finger(s), cursor finger position: " + finger_Pos);
                 }
-                /*
-                if (!frame.Hands.Empty)
-                {
-
-                    // Get the first hand
-                    Hand hand = frame.Hands[0];
-
-                    // Get the hand's sphere radius and palm position
-                    SafeWriteLine("Hand sphere radius: " + hand.SphereRadius.ToString("n2")
-                                + " mm, palm position: " + hand.PalmPosition);
-
-                    // Get the hand's normal vector and direction
-                    Vector normal = hand.PalmNormal;
-                    Vector direction = hand.Direction;
-
-                    // Calculate the hand's pitch, roll, and yaw angles
-                    SafeWriteLine("Hand pitch: " + direction.Pitch * 180.0f / (float)Math.PI + " degrees, "
-                                + "roll: " + normal.Roll * 180.0f / (float)Math.PI + " degrees, "
-                                + "yaw: " + direction.Yaw * 180.0f / (float)Math.PI + " degrees");
-                }
-                */
             }
-            /*
-            // Get gestures
-            GestureList gestures = frame.Gestures();
-            for (int i = 0; i < gestures.Count; i++)
-            {
-                Gesture gesture = gestures[i];
-
-                switch (gesture.Type)
-                {
-                    case Gesture.GestureType.TYPECIRCLE:
-                        CircleGesture circle = new CircleGesture(gesture);
-
-                        // Calculate clock direction using the angle between circle normal and pointable
-                        String clockwiseness;
-                        if (circle.Pointable.Direction.AngleTo(circle.Normal) <= Math.PI / 4)
-                        {
-                            //Clockwise if angle is less than 90 degrees
-                            clockwiseness = "clockwise";
-                        }
-                        else
-                        {
-                            clockwiseness = "counterclockwise";
-                        }
-
-                        float sweptAngle = 0;
-
-                        // Calculate angle swept since last frame
-                        if (circle.State != Gesture.GestureState.STATESTART)
-                        {
-                            CircleGesture previousUpdate = new CircleGesture(controller.Frame(1).Gesture(circle.Id));
-                            sweptAngle = (circle.Progress - previousUpdate.Progress) * 360;
-                        }
-
-                        SafeWriteLine("Circle id: " + circle.Id
-                                       + ", " + circle.State
-                                       + ", progress: " + circle.Progress
-                                       + ", radius: " + circle.Radius
-                                       + ", angle: " + sweptAngle
-                                       + ", " + clockwiseness);
-                        break;
-                    case Gesture.GestureType.TYPESWIPE:
-                        SwipeGesture swipe = new SwipeGesture(gesture);
-                        SafeWriteLine("Swipe id: " + swipe.Id
-                                       + ", " + swipe.State
-                                       + ", position: " + swipe.Position
-                                       + ", direction: " + swipe.Direction
-                                       + ", speed: " + swipe.Speed);
-                        break;
-                    case Gesture.GestureType.TYPEKEYTAP:
-                        KeyTapGesture keytap = new KeyTapGesture(gesture);
-                        SafeWriteLine("Tap id: " + keytap.Id
-                                       + ", " + keytap.State
-                                       + ", position: " + keytap.Position
-                                       + ", direction: " + keytap.Direction);
-                        break;
-                    case Gesture.GestureType.TYPESCREENTAP:
-                        ScreenTapGesture screentap = new ScreenTapGesture(gesture);
-                        SafeWriteLine("Tap id: " + screentap.Id
-                                       + ", " + screentap.State
-                                       + ", position: " + screentap.Position
-                                       + ", direction: " + screentap.Direction);
-                        break;
-                    default:
-                        SafeWriteLine("Unknown gesture type.");
-                        break;
-                }
-            }
-            */
-
             if (!frame.Hands.Empty || !frame.Gestures().Empty)
             {
                 SafeWriteLine("");
@@ -197,7 +108,7 @@ namespace WpfApplication1
             //SafeWriteLine("Inside IsAMatch, new_x - old_x = " + Math.Abs(new_position.x - last_known_position.x) + " & new_y - old_y = " + Math.Abs(new_position.y - last_known_position.y));
             //SafeWriteLine("new_x / old_x = " + new_position.x + "/" + last_known_position.x + " & new_y - old_y = " + new_position.y + "/" + last_known_position.y);
 
-            if ((Math.Abs(new_position.x - last_known_position.x) <= 50) && (Math.Abs(new_position.y - last_known_position.y) <= 50))
+            if ((Math.Abs(new_position.x - last_known_position.x) <= 100) && (Math.Abs(new_position.y - last_known_position.y) <= 100))
             {
                 is_a_match = true;
             }
@@ -275,12 +186,58 @@ namespace WpfApplication1
 
             controller.EnableGesture(Leap.Gesture.GestureType.TYPEKEYTAP);
             
+
+
+            if (!frame.Fingers.Empty)
+            {
+
+                // Check if the hand has any fingers
+                FingerList fingers = frame.Fingers;
+                if (!fingers.Empty)
+                {
+                    Vector right_finger_position = getFingerVector(controller, fingers.Rightmost);
+                    Boolean is_matched = IsAMatch(right_finger_position, last_position);
+
+                    //SafeWriteLine("is_Matched? = " + is_matched);
+
+                    //Set cursor_position
+                    if (last_position.x == 0 && last_position.y == 0)
+                    {
+                        cursor_position = right_finger_position;
+                    }
+                    else if (is_matched)
+                    {
+                        cursor_position = right_finger_position;
+                    }
+                    /*
+                     else
+                    {
+                        cursor_position = last_position;
+                    }
+                     */
+
+                    cursor_position = getStabilizedVector(cursor_position);
+
+                    int LeapX = 0;
+                    int LeapY = 0;
+
+                    //                            LeapX = (int)cursor_position.x + 30;
+                    //                            LeapY = (int)cursor_position.y + 20;
+
+                    LeapX = (int)cursor_position.x + 20;
+                    LeapY = (int)cursor_position.y + 20;
+
+                    if (fingers.Count > 1 && is_matched)
+                    {
+
             // Get gestures
     		GestureList gestures = frame.Gestures ();
+
+            //Set gesture config settings
             if (
                 controller.Config.SetFloat("Gesture.KeyTap.MinDownVelocity", 30.0f)
                 && controller.Config.SetFloat("Gesture.KeyTap.HistorySeconds", 0.2f)
-                && controller.Config.SetFloat("Gesture.KeyTap.MinDistance", 0.5f)
+                && controller.Config.SetFloat("Gesture.KeyTap.MinDistance", 0.2f)
             )
             {
                 controller.Config.Save();
@@ -292,75 +249,51 @@ namespace WpfApplication1
                 {
                     Gesture gesture = gestures[i];
 
-                    switch (gesture.Type)
+                    if (gesture.Pointables.Leftmost.TipPosition.Equals(fingers.Leftmost.TipPosition))
                     {
-                        case Gesture.GestureType.TYPEKEYTAP:
+                        switch (gesture.Type)
+                        {
+                            case Gesture.GestureType.TYPEKEYTAP:
+                                cursor_is_tapped = true;
 
-                            cursor_is_tapped = true;
-
-                            KeyTapGesture keytap = new KeyTapGesture(gesture);
-                            SafeWriteLine("Tap id: " + keytap.Id
-                                       + ", " + keytap.State
-                                       + ", position: " + keytap.Position
-                                       + ", direction: " + keytap.Direction);
-                            break;
+                                KeyTapGesture keytap = new KeyTapGesture(gesture);
+                                SafeWriteLine("Tap id: " + keytap.Id
+                                           + ", " + keytap.State
+                                           + ", position: " + keytap.Position
+                                           + ", direction: " + keytap.Direction);
+                                break;
+                        }
                     }
                 }
             }
 
-            if (!frame.Fingers.Empty)
-            {
-                // Get the first hand
-//                Hand hand = frame.Hands[0];
-                // Check if the hand has any fingers
-                //FingerList fingers = hand.Fingers;
-                //if (!fingers.Empty)
-                //{
-
-                // Check if the hand has any fingers
-                FingerList fingers = frame.Fingers;
-                if (!fingers.Empty)
-                {
-                    Vector tmp_cursor_position = getFingerVector(controller, fingers.Rightmost);
-                    Boolean is_matched = IsAMatch(tmp_cursor_position, last_position);
-                    //SafeWriteLine("is_Matched? = " + is_matched);
-                    if (last_position.x == 0 && last_position.y == 0)
-                    {
-                        cursor_position = tmp_cursor_position;
-                    }
-                    else if (is_matched)
-                    {
-                        cursor_position = tmp_cursor_position;
-                    } 
-
-
-                    if (fingers.Count > 1 && is_matched)
-                    {
                         int triggerFingers = leftHandFingers(frame.Fingers,fingers.Rightmost);
                         //cursor_position = getFingerVector(controller,fingers.Rightmost);
 
                         //cursor_position = fingers.Rightmost.TipPosition;
                         SafeWriteLine("Frame id: " + frame.Id + ", last_frame_id:" + last_frame_Id);
 
-                        if (frame.Id - last_frame_Id > 10 && (get_action_type() == "normal"))
+                        //if (frame.Id - last_frame_Id > 10)
+                        if(frame.Id - last_frame_Id >= 1)
                         {
-                            int LeapX = 0;
-                            int LeapY = 0;
 
-//                            LeapX = (int)cursor_position.x + 30;
-//                            LeapY = (int)cursor_position.y + 20;
-
-                            LeapX = (int)cursor_position.x + 20;
-                            LeapY = (int)cursor_position.y + 20;
 
                             switch (triggerFingers)
                             {
+
                                 case 1:
-                                    MouseInput.LeftClick(LeapX, LeapY);
-                                    if (get_action_type() == "normal")
+                                    //MouseInput.LeftClickDown(LeapX, LeapY);
+                                    if (cursor_is_tapped)
                                     {
-                                        set_action_type("left_click");
+                                        MouseInput.LeftClick(LeapX,LeapY);
+                                        cursor_is_tapped = false;
+
+                                        if (get_action_type() == "normal")
+                                        {
+                                            set_action_type("left_click");
+                                        }
                                     }
+
                                     last_frame_Id = frame.Id;
                                     break;
 
@@ -375,19 +308,21 @@ namespace WpfApplication1
 
                             } //End Switch
                         }//End If Frame >10
+                    } else if (MouseInput.MouseLeftClickStatus() == "Down")
+                    {
+                         MouseInput.LeftClickUp(LeapX,LeapY);
+
                     }else if(frame.Id - last_frame_Id > 10 && get_action_type() != "normal")
                     {
                         set_action_type("normal");
                     }// End fingers.count > 1
-
-
 
                     last_position = cursor_position;
                 }
                 else
                 {
                     last_position = Vector.Zero;
-                }
+                } // End if Fingers empty
             }
 
            // SafeWriteLine("last_frame_id_after: " + last_frame_Id);
@@ -400,7 +335,7 @@ namespace WpfApplication1
 
     }
 
-}    
+}
 /*
 class Sample
 {

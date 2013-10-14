@@ -23,6 +23,9 @@ namespace WpfApplication1
             public const int MOUSEEVENTF_LEFTDOWN = 0x02;
             public const int MOUSEEVENTF_LEFTUP = 0x04;
 
+            public static string leftClickStatus = "Up";
+            public static Point last_clicked_point = new Point(0, 0);
+
             /* Custom by CS */
             public static void DragAndDrop(int x, int y)
             {
@@ -33,9 +36,28 @@ namespace WpfApplication1
 
             public static void LeftClick(int x, int y)
             {
+                LeftClickDown(x, y);
+                LeftClickUp(x, y);
+            }
+
+            public static void LeftClickDown(int x, int y)
+            {
                 SetCursorPos(x, y);
                 mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
+                leftClickStatus = "Down";
+                last_clicked_point = new Point(x,y);
+            }
+
+            public static void LeftClickUp(int x, int y)
+            {
+                SetCursorPos(x, y);
                 mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+                leftClickStatus = "Up";
+            }
+
+            public static string MouseLeftClickStatus()
+            {
+                return leftClickStatus;
             }
 
 /*
