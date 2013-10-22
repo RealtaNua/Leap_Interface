@@ -18,6 +18,7 @@ using System.Reflection;
 using Leap;
 
 
+
 namespace WpfApplication1
 {
 
@@ -29,11 +30,34 @@ namespace WpfApplication1
     {
         FloatingOSDWindow osd1 = new FloatingOSDWindow();
 
+        private static IntPtr default_cursor;
 
             //Create a sample listener and controller
             LeapListener listener = new LeapListener();
             Controller controller = new Controller();
 
+            [DllImport("user32.dll")]
+            static extern IntPtr LoadCursorFromFile(string lpFileName);
+
+            [DllImport("user32.dll")]
+            static extern IntPtr SetCursor(IntPtr hCursor);
+
+            [DllImport("user32.dll")]
+            static extern bool SetSystemCursor(IntPtr hcur, uint id);
+
+            [DllImport("user32.dll")]
+            static extern IntPtr LoadCursor(IntPtr hInstance, int lpCursorName);
+
+            [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+            public static extern IntPtr GetCursor();
+
+            [DllImport("user32.dll", SetLastError = true)]
+            static extern bool SystemParametersInfo(int uiAction, int uiParam, IntPtr pvParam, int fWinIni);
+
+
+            private const uint OCR_NORMAL = 32512;
+            public static int IDC_ARROW = 32512;
+            private static Boolean cursor_is_blank = false;
 
 
         public MainWindow()
@@ -41,6 +65,7 @@ namespace WpfApplication1
 
 
             InitializeComponent();
+
 
 
             // Keep this process running until Enter is pressed
@@ -57,6 +82,7 @@ namespace WpfApplication1
 
 //            _timer.Tick += (sender,e) => Timer_Tick(sender,e,listener,controller);
             _timer.Tick += (sender, e) => Timer_Tick(sender, e);
+
 
 
         }
@@ -83,7 +109,7 @@ namespace WpfApplication1
                 if (leapVec.x != 0 || leapVec.y != 0)
                 {
 
-                    System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.None;
+                    //System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.None;
 
                     LeapX = (int)leapVec.x;
                     LeapY = (int)leapVec.y;
@@ -93,12 +119,12 @@ namespace WpfApplication1
                     switch (action)
                     {
                         case "normal":
-                        //Show normal cursor
-                        osd1.Show(new System.Drawing.Point(LeapX, LeapY), 155, System.Drawing.Color.Lime,
-                        new Font("Wingdings", 26f, System.Drawing.FontStyle.Regular),
-                        500, FloatingWindow.AnimateMode.ExpandCollapse,
-                        370, "l");
-                        break;
+                            //Show normal cursor
+                            osd1.Show(new System.Drawing.Point(LeapX, LeapY), 155, System.Drawing.Color.Lime,
+                            new Font("Wingdings", 26f, System.Drawing.FontStyle.Regular),
+                            500, FloatingWindow.AnimateMode.ExpandCollapse,
+                            370, "l");
+                            break;
 
                         case "left_click":
                             //Show left click trigger cursor
@@ -106,20 +132,56 @@ namespace WpfApplication1
                             new Font("Wingdings", 20f, System.Drawing.FontStyle.Regular),
                             500, FloatingWindow.AnimateMode.ExpandCollapse,
                             370, "l");
-                        break;
+                            break;
 
                         case "right_click":
                             osd1.Show(new System.Drawing.Point(LeapX, LeapY), 155, System.Drawing.Color.Red,
                             new Font("Wingdings", 20f, System.Drawing.FontStyle.Regular),
                             500, FloatingWindow.AnimateMode.ExpandCollapse,
                             370, "l");
-                        break;
+                            break;
 
-                    
+
                     }
 
-                }
+                    if (this.WindowState.Equals(WindowState.Minimized) && (MouseInput.leftClickStatus == "Down"))
+                    {
+                        MouseInput.LeftClickUp(LeapX, LeapY);
+                    }
 
+                    //string blank_cursor_location = @".\Resources\blank.cur";
+
+                    if (cursor_is_blank == false)
+                    {
+                        try
+                        {
+                            default_cursor = LoadCursor(IntPtr.Zero,IDC_ARROW);
+
+                            string blank_cursor_location = "C:\\Users\\AdminNUS\\Documents\\GitHub\\Leap_Interface\\WpfApplication1\\Resources\\blank.cur";
+                            System.IntPtr hide_cursor = LoadCursorFromFile(blank_cursor_location);
+
+                            SetSystemCursor(hide_cursor, OCR_NORMAL);
+                        }
+                        finally
+                        {
+                            //SetSystemCursor(default_cursor, OCR_NORMAL);
+                        }
+                    }
+
+
+                }
+                else
+                {
+                    string arrow_cursor_location = "C:\\Users\\AdminNUS\\Documents\\GitHub\\Leap_Interface\\WpfApplication1\\Resources\\aero_arrow.cur";
+                    default_cursor = LoadCursorFromFile(arrow_cursor_location);
+
+                    int SPI_SETCURSORS = 0x0057;
+                    SystemParametersInfo(SPI_SETCURSORS, 0, IntPtr.Zero, 0);
+
+                    //SetCursor(LoadCursor(IntPtr.Zero,IDC_ARROW));
+                    //SetSystemCursor(default_cursor, OCR_NORMAL);
+                    
+                }
             }
 
         }

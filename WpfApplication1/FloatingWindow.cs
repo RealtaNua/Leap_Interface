@@ -15,6 +15,10 @@ namespace WpfApplication1
 	/// </summary>
 	public class FloatingWindow : NativeWindow, IDisposable
     {
+
+        [DllImport("user32.dll")]
+        static extern int ShowCursor(bool bShow);
+
         #region #  Enums  #
         public enum AnimateMode
         {
@@ -90,6 +94,7 @@ namespace WpfApplication1
 				User32.ReleaseDC(IntPtr.Zero, ptr1);
 				Gdi32.DeleteObject(ptr3);
 				Gdi32.DeleteDC(ptr2);
+                
 			}
 		}
 		#endregion
@@ -136,9 +141,13 @@ namespace WpfApplication1
 		/// </summary>
 		public virtual void Show()
 		{
+
             if(base.Handle == IntPtr.Zero) //if handle don't equal to zero - window was created and just hided
                 this.CreateWindowOnly();
             User32.ShowWindow(base.Handle, User32.SW_SHOWNOACTIVATE);
+
+            ShowCursor(false);
+
         }
         /// <summary>
         /// Shows the window.
@@ -306,7 +315,6 @@ namespace WpfApplication1
 
         private void CreateWindowOnly()
         {
-
             CreateParams params1 = new CreateParams();
             params1.Caption = "FloatingNativeWindow";
             int nX = this._location.X;

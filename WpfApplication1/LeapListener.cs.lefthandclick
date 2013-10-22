@@ -179,9 +179,14 @@ namespace WpfApplication1
             // Get the most recent frame and report some basic information
             Frame frame = controller.Frame();
             Vector cursor_position = Vector.Zero;
-
+            Boolean cursor_is_tapped = false;
+            //int framecounter = 0;
 
             //SafeWriteLine("last_frame_id_before: " + last_frame_Id);
+
+            controller.EnableGesture(Leap.Gesture.GestureType.TYPEKEYTAP);
+            
+
 
             if (!frame.Fingers.Empty)
             {
@@ -195,8 +200,6 @@ namespace WpfApplication1
 
                     //SafeWriteLine("is_Matched? = " + is_matched);
 
-                    SafeWriteLine("Frame id: " + frame.Id + ", is_matched: "+ is_matched +", timestamp: " + frame.Timestamp + ", hands: " + frame.Hands.Count + ", fingers: " + frame.Fingers.Count);
-
                     //Set cursor_position
                     if (last_position.x == 0 && last_position.y == 0)
                     {
@@ -206,13 +209,12 @@ namespace WpfApplication1
                     {
                         cursor_position = right_finger_position;
                     }
-                        /*
-                     else if(get_action_type() == "left_click" || get_action_type() == "right_click")
+                    /*
+                     else
                     {
                         cursor_position = last_position;
                     }
-                         */
-                     
+                     */
 
                     cursor_position = getStabilizedVector(cursor_position);
 
@@ -228,26 +230,68 @@ namespace WpfApplication1
                     if (fingers.Count > 1 && is_matched)
                     {
 
+            // Get gestures
+    		GestureList gestures = frame.Gestures ();
+
+            //Set gesture config settings
+            if (
+                controller.Config.SetFloat("Gesture.KeyTap.MinDownVelocity", 30.0f)
+                && controller.Config.SetFloat("Gesture.KeyTap.HistorySeconds", 0.2f)
+                && controller.Config.SetFloat("Gesture.KeyTap.MinDistance", 0.2f)
+            )
+            {
+                controller.Config.Save();
+            }
+
+            if (gestures.Count > 0)
+            {
+                for (int i = 0; i < gestures.Count; i++)
+                {
+                    Gesture gesture = gestures[i];
+
+                    if (gesture.Pointables.Leftmost.TipPosition.Equals(fingers.Leftmost.TipPosition))
+                    {
+                        switch (gesture.Type)
+                        {
+                            case Gesture.GestureType.TYPEKEYTAP:
+                                cursor_is_tapped = true;
+
+                                KeyTapGesture keytap = new KeyTapGesture(gesture);
+                                SafeWriteLine("Tap id: " + keytap.Id
+                                           + ", " + keytap.State
+                                           + ", position: " + keytap.Position
+                                           + ", direction: " + keytap.Direction);
+                                break;
+                        }
+                    }
+                }
+            }
+
                         int triggerFingers = leftHandFingers(frame.Fingers,fingers.Rightmost);
                         //cursor_position = getFingerVector(controller,fingers.Rightmost);
 
                         //cursor_position = fingers.Rightmost.TipPosition;
-                        //SafeWriteLine("Frame id: " + frame.Id + ", last_frame_id:" + last_frame_Id);
+                        SafeWriteLine("Frame id: " + frame.Id + ", last_frame_id:" + last_frame_Id);
 
                         //if (frame.Id - last_frame_Id > 10)
-                        if(frame.Id - last_frame_Id >= 10)
+                        if(frame.Id - last_frame_Id >= 1)
                         {
 
 
                             switch (triggerFingers)
                             {
-                                case 1:
 
-                                    if (get_action_type() == "normal")
+                                case 1:
+                                    //MouseInput.LeftClickDown(LeapX, LeapY);
+                                    if (cursor_is_tapped)
                                     {
-                                        MouseInput.LeftClickDown(LeapX, LeapY);
-                                        
-                                        set_action_type("left_click");
+                                        MouseInput.LeftClick(LeapX,LeapY);
+                                        cursor_is_tapped = false;
+
+                                        if (get_action_type() == "normal")
+                                        {
+                                            set_action_type("left_click");
+                                        }
                                     }
 
                                     last_frame_Id = frame.Id;
@@ -263,18 +307,10 @@ namespace WpfApplication1
                                     break;
 
                             } //End Switch
-                        }
-                        else if ((frame.Id - last_frame_Id >= 5) && (get_action_type() == "left_click"))
-                        {
-                            //Hold Mouse left button for Drag & Drop
-                            //MouseInput.LeftClickDown(LeapX, LeapY);
-                            //set_action_type("left_drag");
                         }//End If Frame >10
-                    } else if (MouseInput.MouseLeftClickStatus() == "Down") // if finger_count <= 1
+                    } else if (MouseInput.MouseLeftClickStatus() == "Down")
                     {
-                        //Release Mouse left button for Drag & Drop once left hand finger no longer detected
                          MouseInput.LeftClickUp(LeapX,LeapY);
-                         set_action_type("normal");
 
                     }else if(frame.Id - last_frame_Id > 10 && get_action_type() != "normal")
                     {
