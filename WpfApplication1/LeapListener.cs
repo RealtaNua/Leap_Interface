@@ -8,6 +8,7 @@
 using System;
 using System.Threading;
 using System.Reflection;
+using System.Collections;
 using Leap;
 
 
@@ -83,7 +84,7 @@ namespace WpfApplication1
             }
             if (!frame.Hands.Empty || !frame.Gestures().Empty)
             {
-                SafeWriteLine("");
+                //SafeWriteLine("");
             }
         }
 
@@ -155,9 +156,9 @@ namespace WpfApplication1
             return finger_vector;
         }
 
-        public int leftHandFingers(FingerList fingers, Finger cursor_finger)
+        public ArrayList leftHandFingers(FingerList fingers, Finger cursor_finger)
         {
-            int fingers_on_left_hand = 0;
+            ArrayList fingers_on_left_hand = new ArrayList();
 
             foreach(Finger finger in fingers)
             {
@@ -166,7 +167,7 @@ namespace WpfApplication1
                     float x_diff = cursor_finger.TipPosition.x - finger.TipPosition.x;
                     if (x_diff > 5)
                     {
-                        fingers_on_left_hand += 1;
+                        fingers_on_left_hand.Add(finger);
                     }
                 }
             }
@@ -180,11 +181,7 @@ namespace WpfApplication1
             Frame frame = controller.Frame();
             Vector cursor_position = Vector.Zero;
 
-
             //SafeWriteLine("last_frame_id_before: " + last_frame_Id);
-
-            if (!frame.Fingers.Empty)
-            {
 
                 // Check if the hand has any fingers
                 FingerList fingers = frame.Fingers;
@@ -195,7 +192,7 @@ namespace WpfApplication1
 
                     //SafeWriteLine("is_Matched? = " + is_matched);
 
-                    SafeWriteLine("Frame id: " + frame.Id + ", is_matched: "+ is_matched +", timestamp: " + frame.Timestamp + ", hands: " + frame.Hands.Count + ", fingers: " + frame.Fingers.Count);
+                    //SafeWriteLine("Frame id: " + frame.Id + ", is_matched: "+ is_matched +", timestamp: " + frame.Timestamp + ", hands: " + frame.Hands.Count + ", fingers: " + frame.Fingers.Count);
 
                     //Set cursor_position
                     if (last_position.x == 0 && last_position.y == 0)
@@ -222,13 +219,13 @@ namespace WpfApplication1
                     //                            LeapX = (int)cursor_position.x + 30;
                     //                            LeapY = (int)cursor_position.y + 20;
 
-                    LeapX = (int)cursor_position.x + 20;
-                    LeapY = (int)cursor_position.y + 20;
+                    LeapX = (int)cursor_position.x;
+                    LeapY = (int)cursor_position.y;
 
                     if (fingers.Count > 1 && is_matched)
                     {
 
-                        int triggerFingers = leftHandFingers(frame.Fingers,fingers.Rightmost);
+                        ArrayList triggerFingers = leftHandFingers(frame.Fingers,fingers.Rightmost);
                         //cursor_position = getFingerVector(controller,fingers.Rightmost);
 
                         //cursor_position = fingers.Rightmost.TipPosition;
@@ -239,25 +236,50 @@ namespace WpfApplication1
                         {
 
 
-                            switch (triggerFingers)
+                            switch (triggerFingers.Count)
                             {
                                 case 1:
 
                                     if (get_action_type() == "normal")
                                     {
-                                        MouseInput.LeftClickDown(LeapX, LeapY);
+                                        foreach (Finger finger in triggerFingers)
+                                        {
+                                            //Check Gesture for Left Click
+                                            if (CustomGesture.IsLeftFingerFlicked(finger,frame.Id) == "yes")
+                                            {
+                                                MouseInput.LeftClick();
+                                                set_action_type("left_click");
+                                                SafeWriteLine("left_click detected. Fingers: " + frame.Fingers.Count);
+                                            }
+                                            //Check Gesture for Left Drag
+                                            else if (CustomGesture.IsLeftFingerDragged(finger, frame.Id) == "yes")
+                                            {
+                                                //MouseInput.LeftClickDown(LeapX, LeapY);
+                                                MouseInput.LeftClickDown();
+                                                set_action_type("left_click");
+                                                SafeWriteLine("left_drag detected. Fingers: " + frame.Fingers.Count);
+                                            }
+
+                                            SafeWriteLine("Tip_mag: " + finger.TipVelocity.Magnitude + ", Tip_y: " + finger.TipVelocity.y + ", Tip_z: " + finger.TipVelocity.z + ", Fingers: " + frame.Fingers.Count);
+
+                                            
+
+                                        }
                                         
-                                        set_action_type("left_click");
+
+                                        //MouseInput.LeftClickDown(LeapX, LeapY);
+                                        
+                                        //set_action_type("left_click");
                                     }
 
                                     last_frame_Id = frame.Id;
                                     break;
 
                                 case 2:
-                                    MouseInput.RightClick(LeapX, LeapY);
+                                    //MouseInput.RightClick(LeapX, LeapY);
                                     if (get_action_type() == "normal" || get_action_type() == "left_click")
                                     {
-                                        set_action_type("right_click");
+                                        //set_action_type("right_click");
                                     }
                                     last_frame_Id = frame.Id;
                                     break;
@@ -270,15 +292,29 @@ namespace WpfApplication1
                             //MouseInput.LeftClickDown(LeapX, LeapY);
                             //set_action_type("left_drag");
                         }//End If Frame >10
-                    } else if (MouseInput.MouseLeftClickStatus() == "Down") // if finger_count <= 1
+
+                    } // End If finger_count >= 2
+                        /*
+                    else if (MouseInput.MouseLeftClickStatus() == "Down") 
                     {
                         //Release Mouse left button for Drag & Drop once left hand finger no longer detected
-                         MouseInput.LeftClickUp(LeapX,LeapY);
-                         set_action_type("normal");
+                         //MouseInput.LeftClickUp(LeapX,LeapY);
+                         //MouseInput.LeftClickUp();
+                         CustomGesture.StopLeftFingerDrag();
 
-                    }else if(frame.Id - last_frame_Id > 10 && get_action_type() != "normal")
+                        SafeWriteLine("left_drag stopped. Fingers: " + frame.Fingers.Count);
+
+                        set_action_type("normal");
+
+                    }*/ else if(frame.Id - last_frame_Id > 10 && get_action_type() != "normal")
                     {
                         set_action_type("normal");
+
+                        if (CustomGesture.LeftFingerDragStatus() == "yes")
+                        {
+                            CustomGesture.StopLeftFingerDrag();
+                            SafeWriteLine("left_drag stopped. Fingers: " + frame.Fingers.Count);
+                        }
                     }// End fingers.count > 1
 
                     last_position = cursor_position;
@@ -286,8 +322,9 @@ namespace WpfApplication1
                 else
                 {
                     last_position = Vector.Zero;
+                    SafeWriteLine("No Fingers Detected!");
+
                 } // End if Fingers empty
-            }
 
            // SafeWriteLine("last_frame_id_after: " + last_frame_Id);
 
@@ -295,30 +332,8 @@ namespace WpfApplication1
                 cursor_position.y = 735;
 
             return cursor_position;
-        }
+        } // End TrackLeapCursor() function
 
-    }
+    } // End LeapListener Class
 
-}
-/*
-class Sample
-{
-	public static void Main ()
-	{
-		// Create a sample listener and controller
-		LeapListener listener = new LeapListener ();
-		Controller controller = new Controller ();
-
-		// Have the sample listener receive events from the controller
-		controller.AddListener (listener);
-
-		// Keep this process running until Enter is pressed
-		Console.WriteLine ("Press Enter to quit...");
-		Console.ReadLine ();
-
-		// Remove the sample listener when done
-		controller.RemoveListener (listener);
-		controller.Dispose ();
-	}
-}
-*/
+} // End NameSpace WPFApplication1

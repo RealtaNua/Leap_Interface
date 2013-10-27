@@ -48,6 +48,18 @@ namespace WpfApplication1
                 last_clicked_point = new Point(x,y);
             }
 
+            public static void LeftClickDown()
+            {
+                DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(0, 0));
+                leftClickStatus = "Down";
+            }
+
+            public static void LeftClickUp()
+            {
+                DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(0, 0));
+                leftClickStatus = "Up";
+            }
+
             public static void LeftClickUp(int x, int y)
             {
                 SetCursorPos(x, y);
