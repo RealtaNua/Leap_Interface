@@ -71,7 +71,7 @@ namespace WpfApplication1
 
             //Console.WriteLine("Before IsLeftFingerDragged, finger_is_dragged: " + finger_is_dragged + ", frame_id: " + frame_id + ",gesture_start_frame_id: " + drag_start_frame_id);
 
-            if (finger_is_dragged == "no" && finger_direction == "up" && finger_velocity > 500)
+            if (finger_is_dragged == "no" && finger_direction == "up" && finger_velocity > 400)
             {
                 finger_is_dragged = "in_progress";
                 drag_start_frame_id = frame_id;

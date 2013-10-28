@@ -160,7 +160,7 @@ namespace WpfApplication1
 
                     if (this.WindowState.Equals(WindowState.Minimized) && (MouseInput.leftClickStatus == "Down"))
                     {
-                        MouseInput.LeftClickUp(LeapX, LeapY);
+                        //MouseInput.LeftClickUp(LeapX, LeapY);
                     }
 
                     //string blank_cursor_location = @".\Resources\blank.cur";

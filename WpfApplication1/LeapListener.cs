@@ -90,6 +90,8 @@ namespace WpfApplication1
 
         /********************************* Custom Methods ***********************************/
         public static Vector last_position = Vector.Zero;
+        public static Vector last_position_2 = Vector.Zero;
+        public static Vector last_position_3 = Vector.Zero; 
         public static long last_frame_Id = 0;
         public static string action_type = "normal";
 
@@ -117,15 +119,26 @@ namespace WpfApplication1
             return is_a_match;
         }
 
-        public Vector getStabilizedVector(Vector cursor_position)
+        public Vector getStabilizedVector(Vector cursor_position, float cursor_velocity)
         {
+            SafeWriteLine("Cursor finger velocity: " + cursor_velocity + ", x: " + cursor_position.x + ", y: " + cursor_position.y);
 
             if (last_position.x != 0 || last_position.y != 0)
             {
                 if (IsAMatch(cursor_position, last_position))
                 {
-                    cursor_position.x = (cursor_position.x + last_position.x) / 2;
-                    cursor_position.y = (cursor_position.y + last_position.y) / 2;
+                    if (cursor_velocity <= 7)
+                    {
+                        //cursor_position.x = (cursor_position.x + last_position.x + last_position_2.x + last_position_3.x) / 4;
+                        //cursor_position.y = (cursor_position.y + last_position.y + last_position_2.y + last_position_3.y) / 4;
+                        cursor_position.x = last_position.x;
+                        cursor_position.y = last_position.y;
+                    }
+                    else
+                    {
+                        cursor_position.x = (cursor_position.x + last_position.x) / 2;
+                        cursor_position.y = (cursor_position.y + last_position.y) / 2;
+                    }
                 }
             }
                 return cursor_position;
@@ -187,7 +200,10 @@ namespace WpfApplication1
                 FingerList fingers = frame.Fingers;
                 if (!fingers.Empty)
                 {
-                    Vector right_finger_position = getFingerVector(controller, fingers.Rightmost);
+                    Finger right_finger = fingers.Rightmost;
+                    Vector right_finger_position = getFingerVector(controller, right_finger);
+                    float right_finger_velocity = right_finger.TipVelocity.Magnitude;
+
                     Boolean is_matched = IsAMatch(right_finger_position, last_position);
 
                     //SafeWriteLine("is_Matched? = " + is_matched);
@@ -209,9 +225,9 @@ namespace WpfApplication1
                         cursor_position = last_position;
                     }
                          */
-                     
 
-                    cursor_position = getStabilizedVector(cursor_position);
+
+                    cursor_position = getStabilizedVector(cursor_position, right_finger_velocity);
 
                     int LeapX = 0;
                     int LeapY = 0;
@@ -225,7 +241,7 @@ namespace WpfApplication1
                     if (fingers.Count > 1 && is_matched)
                     {
 
-                        ArrayList triggerFingers = leftHandFingers(frame.Fingers,fingers.Rightmost);
+                        ArrayList triggerFingers = leftHandFingers(frame.Fingers,right_finger);
                         //cursor_position = getFingerVector(controller,fingers.Rightmost);
 
                         //cursor_position = fingers.Rightmost.TipPosition;
@@ -252,7 +268,7 @@ namespace WpfApplication1
                                                 SafeWriteLine("left_click detected. Fingers: " + frame.Fingers.Count);
                                             }
                                             //Check Gesture for Left Drag
-                                            else if (CustomGesture.IsLeftFingerDragged(finger, frame.Id) == "yes")
+                                            else if (CustomGesture.IsLeftFingerDragged(finger, frame.Id) == "yes" && MouseInput.MouseLeftClickStatus() != "Down")
                                             {
                                                 //MouseInput.LeftClickDown(LeapX, LeapY);
                                                 MouseInput.LeftClickDown();
@@ -260,7 +276,7 @@ namespace WpfApplication1
                                                 SafeWriteLine("left_drag detected. Fingers: " + frame.Fingers.Count);
                                             }
 
-                                            SafeWriteLine("Tip_mag: " + finger.TipVelocity.Magnitude + ", Tip_y: " + finger.TipVelocity.y + ", Tip_z: " + finger.TipVelocity.z + ", Fingers: " + frame.Fingers.Count);
+                                            //SafeWriteLine("Tip_mag: " + finger.TipVelocity.Magnitude + ", Tip_y: " + finger.TipVelocity.y + ", Tip_z: " + finger.TipVelocity.z + ", Fingers: " + frame.Fingers.Count);
 
                                             
 
@@ -294,19 +310,18 @@ namespace WpfApplication1
                         }//End If Frame >10
 
                     } // End If finger_count >= 2
-                        /*
                     else if (MouseInput.MouseLeftClickStatus() == "Down") 
                     {
                         //Release Mouse left button for Drag & Drop once left hand finger no longer detected
                          //MouseInput.LeftClickUp(LeapX,LeapY);
-                         //MouseInput.LeftClickUp();
+                         MouseInput.LeftClickUp();
                          CustomGesture.StopLeftFingerDrag();
 
                         SafeWriteLine("left_drag stopped. Fingers: " + frame.Fingers.Count);
 
                         set_action_type("normal");
 
-                    }*/ else if(frame.Id - last_frame_Id > 10 && get_action_type() != "normal")
+                    } else if(frame.Id - last_frame_Id > 10 && get_action_type() != "normal")
                     {
                         set_action_type("normal");
 
@@ -318,10 +333,14 @@ namespace WpfApplication1
                     }// End fingers.count > 1
 
                     last_position = cursor_position;
+                    last_position_2 = last_position;
+                    last_position_3 = last_position_2;
                 }
                 else
                 {
                     last_position = Vector.Zero;
+                    last_position_2 = Vector.Zero;
+                    last_position_3 = Vector.Zero; 
                     SafeWriteLine("No Fingers Detected!");
 
                 } // End if Fingers empty
