@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Leap;
 
-namespace WpfApplication1
+namespace LeapTouchPoint
 {
     class CustomGesture : Gesture
     {

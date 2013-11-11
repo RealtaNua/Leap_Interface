@@ -8,7 +8,7 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 //using Leap;
 
-namespace WpfApplication1
+namespace LeapTouchPoint
 {
 	/// <summary>
     /// Base class which represents a floating native window with transparency and custom painting

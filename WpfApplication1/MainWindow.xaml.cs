@@ -19,7 +19,7 @@ using Leap;
 
 
 
-namespace WpfApplication1
+namespace LeapTouchPoint
 {
 
 
@@ -54,7 +54,7 @@ namespace WpfApplication1
             [DllImport("user32.dll", SetLastError = true)]
             static extern bool SystemParametersInfo(int uiAction, int uiParam, IntPtr pvParam, int fWinIni);
 
-
+            
             private const uint OCR_NORMAL = 32512;
             public static int IDC_ARROW = 32512;
             private static Boolean cursor_is_blank = false;
@@ -134,7 +134,10 @@ namespace WpfApplication1
                             500, FloatingWindow.AnimateMode.ExpandCollapse,
                             370, "l");
                             */
-                            MouseInput.MoveMouse(new System.Drawing.Point(LeapX,LeapY));
+                            //MouseInput.MoveMouse(new System.Drawing.Point(LeapX,LeapY));
+                            
+                            listener.LeapMoveMouse(LeapX,LeapY);
+
                             break;
 
                         case "left_click":
@@ -145,7 +148,10 @@ namespace WpfApplication1
                             500, FloatingWindow.AnimateMode.ExpandCollapse,
                             370, "l");
                              */
-                            MouseInput.MoveMouse(new System.Drawing.Point(LeapX, LeapY));                            
+                            //MouseInput.MoveMouse(new System.Drawing.Point(LeapX, LeapY));                            
+
+                            //listener.LeapMoveMouse(LeapX, LeapY);
+
                             break;
 
                         case "right_click":
@@ -158,11 +164,6 @@ namespace WpfApplication1
 
                     }
 
-                    if (this.WindowState.Equals(WindowState.Minimized) && (MouseInput.leftClickStatus == "Down"))
-                    {
-                        //MouseInput.LeftClickUp(LeapX, LeapY);
-                    }
-
                     //string blank_cursor_location = @".\Resources\blank.cur";
 
                     if (cursor_is_blank == false)
@@ -171,7 +172,7 @@ namespace WpfApplication1
                         {
                             //default_cursor = LoadCursor(IntPtr.Zero,IDC_ARROW);
 
-                            //string blank_cursor_location = "C:\\Users\\AdminNUS\\Documents\\GitHub\\Leap_Interface\\WpfApplication1\\Resources\\blank.cur";
+                            //string blank_cursor_location = "C:\\Users\\AdminNUS\\Documents\\GitHub\\Leap_Interface\\LeapTouchPoint\\Resources\\blank.cur";
                             //System.IntPtr hide_cursor = LoadCursorFromFile(blank_cursor_location);
 
                             //SetSystemCursor(hide_cursor, OCR_NORMAL);
@@ -186,7 +187,7 @@ namespace WpfApplication1
                 }
                 else
                 {
-                    //string arrow_cursor_location = "C:\\Users\\AdminNUS\\Documents\\GitHub\\Leap_Interface\\WpfApplication1\\Resources\\aero_arrow.cur";
+                    //string arrow_cursor_location = "C:\\Users\\AdminNUS\\Documents\\GitHub\\Leap_Interface\\LeapTouchPoint\\Resources\\aero_arrow.cur";
                     //default_cursor = LoadCursorFromFile(arrow_cursor_location);
 
                     //int SPI_SETCURSORS = 0x0057;

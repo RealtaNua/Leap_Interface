@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Windows.Forms;
 using Leap;
 
-namespace WpfApplication1
+namespace LeapTouchPoint
 {
     public class FloatingOSDWindow : FloatingWindow
     {

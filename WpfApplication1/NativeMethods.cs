@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
-namespace WpfApplication1
+namespace LeapTouchPoint
 {
 
 
@@ -14,6 +14,16 @@ namespace WpfApplication1
     {
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern Int32 SendInput(Int32 cInputs, ref INPUT pInputs, Int32 cbSize);
+
+        [DllImport("user32.dll")]
+        internal static extern void mouse_event(
+               UInt32 dwFlags, // motion and click options
+               UInt32 dx, // horizontal position or change
+               UInt32 dy, // vertical position or change
+               UInt32 dwData, // wheel movement
+               IntPtr dwExtraInfo // application-defined information
+        );
+
 
         [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 28)]
         internal struct INPUT

@@ -13,10 +13,10 @@ using Leap;
 
 
 
-namespace WpfApplication1
+namespace LeapTouchPoint
 {
 
-    class LeapListener : Listener
+    public class LeapListener : Listener
     {
         private Object thisLock = new Object();
 
@@ -86,6 +86,7 @@ namespace WpfApplication1
             {
                 //SafeWriteLine("");
             }
+
         }
 
         /********************************* Custom Methods ***********************************/
@@ -93,7 +94,7 @@ namespace WpfApplication1
         public static Vector last_position_2 = Vector.Zero;
         public static Vector last_position_3 = Vector.Zero; 
         public static long last_frame_Id = 0;
-        public static string action_type = "normal";
+        private static string action_type = "normal";
 
         public void set_action_type(string action)
         {
@@ -105,11 +106,24 @@ namespace WpfApplication1
             return action_type;
         }
 
+        public void set_last_position(Vector position)
+        {
+            last_position = position;
+        }
+
+        public Vector get_last_position()
+        {
+            return last_position;
+        }
+
+        public void LeapMoveMouse(int x, int y)
+        {
+            MouseInput.MoveMouse(new System.Drawing.Point(x, y));
+        }
+
         public Boolean IsAMatch(Vector new_position,Vector last_known_position)
         {
             Boolean is_a_match = false;
-            //SafeWriteLine("Inside IsAMatch, new_x - old_x = " + Math.Abs(new_position.x - last_known_position.x) + " & new_y - old_y = " + Math.Abs(new_position.y - last_known_position.y));
-            //SafeWriteLine("new_x / old_x = " + new_position.x + "/" + last_known_position.x + " & new_y - old_y = " + new_position.y + "/" + last_known_position.y);
 
             if ((Math.Abs(new_position.x - last_known_position.x) <= 100) && (Math.Abs(new_position.y - last_known_position.y) <= 100))
             {
@@ -355,4 +369,4 @@ namespace WpfApplication1
 
     } // End LeapListener Class
 
-} // End NameSpace WPFApplication1
+} // End NameSpace LeapTouchPoint

@@ -9,62 +9,53 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 
-namespace WpfApplication1
+namespace LeapTouchPoint
 {
         public class MouseInput
         {
             //This is a replacement for Cursor.Position in WinForms
             [System.Runtime.InteropServices.DllImport("user32.dll")]
             static extern bool SetCursorPos(int x, int y);
-
+/*
             [System.Runtime.InteropServices.DllImport("user32.dll")]
             public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
-            
+*/            
             public const int MOUSEEVENTF_LEFTDOWN = 0x02;
             public const int MOUSEEVENTF_LEFTUP = 0x04;
 
-            public static string leftClickStatus = "Up";
+            public const UInt32 MOUSEEVENTF_LEFTDOWN1 = 0x0002;
+            public const UInt32 MOUSEEVENTF_LEFTUP1 = 0x0004;
+
+            private static string leftClickStatus = "Up";
             public static Point last_clicked_point = new Point(0, 0);
 
-            /* Custom by CS */
-            public static void DragAndDrop(int x, int y)
+            public static void LeftClick()
             {
-                DoMouse(NativeMethods.MOUSEEVENTF.MOVE | NativeMethods.MOUSEEVENTF.ABSOLUTE, new System.Drawing.Point(x, y));
-                DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(x, y));
-                DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(x, y));                
-            }
-
-            public static void LeftClick(int x, int y)
-            {
-                LeftClickDown(x, y);
-                LeftClickUp(x, y);
-            }
-
-            public static void LeftClickDown(int x, int y)
-            {
-                SetCursorPos(x, y);
-                mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
-                leftClickStatus = "Down";
-                last_clicked_point = new Point(x,y);
+                if (leftClickStatus == "Up")
+                {
+                    NativeMethods.mouse_event(MOUSEEVENTF_LEFTDOWN1, 0, 0, 0, new System.IntPtr());
+                    NativeMethods.mouse_event(MOUSEEVENTF_LEFTUP1, 0, 0, 0, new System.IntPtr());
+                }
             }
 
             public static void LeftClickDown()
             {
-                DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(0, 0));
-                leftClickStatus = "Down";
+                if (leftClickStatus == "Up")
+                {
+                    NativeMethods.mouse_event(MOUSEEVENTF_LEFTDOWN1, 0, 0, 0, new System.IntPtr());
+                    //DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(0, 0));
+                    leftClickStatus = "Down";
+                }
             }
 
             public static void LeftClickUp()
             {
-                DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(0, 0));
-                leftClickStatus = "Up";
-            }
-
-            public static void LeftClickUp(int x, int y)
-            {
-                SetCursorPos(x, y);
-                mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
-                leftClickStatus = "Up";
+                if (leftClickStatus == "Down")
+                {
+                    NativeMethods.mouse_event(MOUSEEVENTF_LEFTUP1, 0, 0, 0, new System.IntPtr());
+                    //DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(0, 0));
+                    leftClickStatus = "Up";
+                }
             }
 
             public static string MouseLeftClickStatus()
@@ -72,42 +63,10 @@ namespace WpfApplication1
                 return leftClickStatus;
             }
 
-/*
-public static void LeftClick(int x, int y)
-{
-    DoMouse(NativeMethods.MOUSEEVENTF.MOVE | NativeMethods.MOUSEEVENTF.ABSOLUTE, new System.Drawing.Point(x, y));
-    DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(x, y));
-    DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(x, y));
-}
-*/
-            public static void LeftClick()
-            {
-                DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(0, 0));
-                DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(0, 0));
-            }
-
-
-            public static void ClickBoundingRectangleByPercentage(int xPercentage, int yPercentage, System.Drawing.Rectangle bounds)
-            {
-                double additional = 0.0;
-                if (xPercentage == 99)
-                    additional = 0.5;
-                int xPixel = Convert.ToInt32(bounds.Left + bounds.Width * (xPercentage + additional) / 100);
-                int yPixel = Convert.ToInt32(bounds.Top + bounds.Height * (yPercentage) / 100);
-                LeftClick(xPixel, yPixel);
-            }
-
             public static void RightClick()
             {
                 DoMouse(NativeMethods.MOUSEEVENTF.RIGHTDOWN, new System.Drawing.Point(0, 0));
                 DoMouse(NativeMethods.MOUSEEVENTF.RIGHTUP, new System.Drawing.Point(0, 0));
-            }
-
-            public static void RightClick(int x, int y)
-            {
-                //DoMouse(NativeMethods.MOUSEEVENTF.MOVE | NativeMethods.MOUSEEVENTF.ABSOLUTE, new System.Drawing.Point(x, y));
-                DoMouse(NativeMethods.MOUSEEVENTF.RIGHTDOWN, new System.Drawing.Point(x, y));
-                DoMouse(NativeMethods.MOUSEEVENTF.RIGHTUP, new System.Drawing.Point(x, y));
             }
 
             public static void MoveMouse(Point p)
@@ -155,5 +114,59 @@ public static void LeftClick(int x, int y)
                 if (result == 0)
                     Debug.WriteLine(Marshal.GetLastWin32Error());
             }
+
+            /* 
+
+            public static void DragAndDrop(int x, int y)
+            {
+                DoMouse(NativeMethods.MOUSEEVENTF.MOVE | NativeMethods.MOUSEEVENTF.ABSOLUTE, new System.Drawing.Point(x, y));
+                DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(x, y));
+                DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(x, y));                
+            }
+             
+            public static void LeftClick(int x, int y)
+            {
+                LeftClickDown(x, y);
+                LeftClickUp(x, y);
+            }
+            public static void LeftClickDown(int x, int y)
+            {
+                SetCursorPos(x, y);
+                mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
+                leftClickStatus = "Down";
+                last_clicked_point = new Point(x, y);
+            }
+
+            public static void LeftClickUp(int x, int y)
+            {
+                SetCursorPos(x, y);
+                mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+                leftClickStatus = "Up";
+            }
+
+            public static void LeftClick(int x, int y)
+            {
+             DoMouse(NativeMethods.MOUSEEVENTF.MOVE | NativeMethods.MOUSEEVENTF.ABSOLUTE, new System.Drawing.Point(x, y));
+             DoMouse(NativeMethods.MOUSEEVENTF.LEFTDOWN, new System.Drawing.Point(x, y));
+             DoMouse(NativeMethods.MOUSEEVENTF.LEFTUP, new System.Drawing.Point(x, y));
+            }
+             
+            public static void RightClick(int x, int y)
+            {
+                //DoMouse(NativeMethods.MOUSEEVENTF.MOVE | NativeMethods.MOUSEEVENTF.ABSOLUTE, new System.Drawing.Point(x, y));
+                DoMouse(NativeMethods.MOUSEEVENTF.RIGHTDOWN, new System.Drawing.Point(x, y));
+                DoMouse(NativeMethods.MOUSEEVENTF.RIGHTUP, new System.Drawing.Point(x, y));
+            }
+
+            public static void ClickBoundingRectangleByPercentage(int xPercentage, int yPercentage, System.Drawing.Rectangle bounds)
+            {
+                double additional = 0.0;
+                if (xPercentage == 99)
+                    additional = 0.5;
+                int xPixel = Convert.ToInt32(bounds.Left + bounds.Width * (xPercentage + additional) / 100);
+                int yPixel = Convert.ToInt32(bounds.Top + bounds.Height * (yPercentage) / 100);
+                LeftClick(xPixel, yPixel);
+            }
+            */
         }
 }
