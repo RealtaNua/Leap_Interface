@@ -1,7 +1,7 @@
 ﻿<Window x:Class="LeapTouchPoint.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="TouchPoint" Height="350" Width="525" ShowInTaskbar="False" Visibility="Hidden">
+        Title="TouchPoint" Height="350" Width="525">
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -9,11 +9,30 @@
             <ColumnDefinition Width="389*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition />
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
-        <Border BorderBrush="Black" BorderThickness="1" Grid.ColumnSpan="2" HorizontalAlignment="Left" Height="100" Margin="95,29.4,0,0" Grid.Row="1" VerticalAlignment="Top" Width="100"/>
+
+        <Label Content="TouchPoint Config" BorderBrush="Transparent" Grid.ColumnSpan="2" Grid.Row="0" Background="Transparent" Foreground="#C0C0C0 " FontSize="20" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="10 0 0 0" VerticalAlignment="Center" Width="518" Margin="0,0,0,0.2"/>
+        <Separator Grid.ColumnSpan="2" Foreground="#C0C0C0" Margin="13,10,10.4,-20"/>
+
+        <Label Content="Settings" BorderBrush="Transparent" Grid.ColumnSpan="2" Grid.Row="1" Background="Transparent" Foreground="Black" FontSize="16" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="20 10 0 0" VerticalAlignment="Center" Width="518" Margin="0,0,0,0.2"/>
+
+        <Label Content="Y-axis Sensitivity" BorderBrush="Transparent" Grid.ColumnSpan="1" Grid.Row="2" Background="Transparent" Foreground="Black" FontSize="12" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="30 10 0 0" VerticalAlignment="Center" Width="518" Margin="0,0,0,0.2" />
+        <Slider Grid.Column="1" Grid.Row="2" HorizontalAlignment="Left" Width="365" Margin="10.4,10,0,0" VerticalAlignment="Top"/>
+
+        <Label Content="Fine Sensitivity" BorderBrush="Transparent" Grid.ColumnSpan="1" Grid.Row="3" Background="Transparent" Foreground="Black" FontSize="12" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="30 10 0 0" VerticalAlignment="Center" Width="518" Margin="0,0,0,0.2" />
+        <Slider Grid.Column="1" Grid.Row="3" HorizontalAlignment="Left" Width="365" Margin="10.4,10,0,0" VerticalAlignment="Top"/>
+
+        <Label Content="Duration B4 Lock" Grid.ColumnSpan="2" Grid.Row="4" BorderBrush="Transparent" Background="Transparent" Foreground="Black" FontSize="12" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="30 10 0 0" VerticalAlignment="Center" Width="518" Margin="0,2,0,23" Height="35" Grid.RowSpan="2" />
+        <TextBox Grid.Column="1" Grid.Row="5" HorizontalAlignment="Left" Width="30" Margin="10.4,10.2,0,27.8" VerticalAlignment="Center"/>
+
+        <Label Content="Tutorial" Grid.ColumnSpan="2" Grid.Row="5" BorderBrush="Transparent" Background="Transparent" Foreground="Black" FontSize="12" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="30 15 0 0" VerticalAlignment="Center" Width="518" Margin="0,30.2,0,-14.4" Height="37" />
+        <Button Content="Run Tutorial Again" Grid.Column="1" Grid.Row="5" HorizontalAlignment="Left" Margin="10.4,44.4,0,-6.4" VerticalAlignment="Center" Width="120" RenderTransformOrigin="-0.109,0.481"/>
 
     </Grid>
 </Window>
