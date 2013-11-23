@@ -24,6 +24,9 @@ namespace LeapTouchPoint
                IntPtr dwExtraInfo // application-defined information
         );
 
+        //Another version that allows integers instead of uint
+        [DllImport("user32.dll")]
+        internal static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
 
         [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 28)]
         internal struct INPUT

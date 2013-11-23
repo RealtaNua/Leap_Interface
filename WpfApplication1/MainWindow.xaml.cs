@@ -30,12 +30,10 @@ namespace LeapTouchPoint
     {
         FloatingOSDWindow osd1 = new FloatingOSDWindow();
 
-        private static IntPtr default_cursor;
-
             //Create a sample listener and controller
-            LeapListener listener = new LeapListener();
-            Controller controller = new Controller();
-
+            static LeapListener listener = new LeapListener();
+            static Controller controller = new Controller();
+            
             [DllImport("user32.dll")]
             static extern IntPtr LoadCursorFromFile(string lpFileName);
 
@@ -66,21 +64,16 @@ namespace LeapTouchPoint
 
             InitializeComponent();
 
+            //LeapTouchPointConfigWindow systraywindow = new LeapTouchPointConfigWindow();
+            //systraywindow.Show();
 
-
-            // Keep this process running until Enter is pressed
-           // Console.WriteLine("Press Enter to quit...");
-            //Console.ReadLine();
-
-            // Remove the sample listener when done
-            //controller.RemoveListener(listener);
-            //controller.Dispose();
-
+            SysTrayApp();
 
             System.Windows.Forms.Timer _timer = new Timer() { Interval = 1, Enabled = true };
 
+            // Have the sample listener receive events from the controller
+            controller.AddListener(listener);
 
-//            _timer.Tick += (sender,e) => Timer_Tick(sender,e,listener,controller);
             try
             {
                 _timer.Tick += (sender, e) => Timer_Tick(sender, e);
@@ -92,110 +85,239 @@ namespace LeapTouchPoint
                 //controller.Dispose();
             }
 
+            // Subscribe to closing event (when X is pressed)
+            this.Closing += ConfigWindow_OnClose;
+
+            this.StateChanged += ConfigWindow_OnMinimize;
 
         }
 
 
-//        private void Timer_Tick(object sender, EventArgs e, LeapListener listener, Controller controller)
+        private static NotifyIcon trayIcon;
+        private static System.Windows.Forms.ContextMenu trayMenu = new System.Windows.Forms.ContextMenu();
+        private static Boolean isStopped = false;
+        private static Boolean isExit = false;
+        //static LeapTouchPointConfigWindow config_window = new LeapTouchPointConfigWindow();
+
+        void SysTrayApp()
+        {
+
+            // Create a simple tray menu with only one item.
+            //trayMenu = new System.Windows.Forms.ContextMenu();
+            trayMenu.MenuItems.Add("Start", OnStart);
+            trayMenu.MenuItems.Add("Stop", OnStop);
+            trayMenu.MenuItems.Add("Exit", OnExit);
+
+
+            // Create a tray icon. In this example we use a
+            // standard system icon for simplicity, but you
+            // can of course use your own custom icon too.
+            trayIcon = new NotifyIcon();
+            trayIcon.Text = "TouchPoint";
+            trayIcon.Icon = new Icon(SystemIcons.Application, 40, 40);
+
+            // Add menu to tray icon and show it.
+            trayIcon.ContextMenu = trayMenu;
+            trayIcon.Visible = true;
+
+            trayIcon.DoubleClick += new EventHandler(iconDoubleClick);
+            /*
+            trayIcon.BalloonTipClicked += new EventHandler(icon_BalloonTipClicked);
+            trayIcon.DoubleClick += new EventHandler(icon_DoubleClick);
+            trayIcon.BalloonTipClosed += new EventHandler(icon_BalloonTipClosed);
+            trayIcon.MouseMove += new System.Windows.Forms.MouseEventHandler(icon_MouseMove);
+            StateChanged += new EventHandler(MainWindow_StateChanged);
+            */
+        }
+
+        void iconDoubleClick(object sender, EventArgs e)
+        {
+            this.Show();
+
+            this.Activate();
+
+
+
+        }
+
+        void ConfigWindow_OnMinimize(object sender, EventArgs e)
+        {
+            //Prevent window from minimizing
+            this.WindowState = WindowState.Normal;
+
+            //Hide window
+            this.Hide();
+
+
+        }
+
+        void ConfigWindow_OnClose(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (!isExit)
+            {
+                // Prevent window from closing
+                e.Cancel = true;
+
+                // Hide window
+                this.Hide();
+
+                trayIcon.BalloonTipText = "TouchPoint is still running. Right-click to exit.";
+                trayIcon.ShowBalloonTip(1);
+            }
+        }
+
+
+        void OnStart(object sender, EventArgs e)
+        {
+            if (isStopped)
+            {
+                //Create a sample listener and controller
+                listener = new LeapListener();
+                controller = new Controller();
+
+                // Have the sample listener receive events from the controller
+                controller.AddListener(listener);
+
+                isStopped = false;
+            }
+        }
+
+        void OnStop(object sender, EventArgs e)
+        {
+            if (!isStopped)
+            {
+                // Remove the listener when done
+                controller.RemoveListener(listener);
+                controller.Dispose();
+                listener.Dispose();
+
+                isStopped = true;
+            }
+        }
+
+        void OnExit(object sender, EventArgs e)
+        {
+            isExit = true;
+            System.Windows.Application.Current.Shutdown();
+        }
+
+
+
+
         private void Timer_Tick(object sender, EventArgs e)
         {
             using (Graphics g = Graphics.FromHwnd(IntPtr.Zero))
             {
 
-                ///throw new NotImplementedException();
-                //System.Drawing.Point pt = System.Windows.Forms.Cursor.Position;
+                //Call lockOrUnlock function to lock or unlock screen based on preexisting logic
+                Boolean isLocked = listener.lockOrUnlock();
 
-                // Have the sample listener receive events from the controller
-                controller.AddListener(listener);
-
-                //X-position of leap cursor
-                
-                Leap.Vector leapVec = listener.trackLeapCursor(controller);
-                int LeapX = 0;
-                int LeapY = 0;
-
-                if (leapVec.x != 0 || leapVec.y != 0)
+                if (!isLocked)
                 {
+                    //Show text indicating screen is locked
+                    osd1.Show(new System.Drawing.Point(500, 500), 155, System.Drawing.Color.DarkGreen,
+                    new Font("Arial", 20f, System.Drawing.FontStyle.Regular),
+                    500, FloatingWindow.AnimateMode.ExpandCollapse,
+                    370, "UNLOCKED");
 
-                    //System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.None;
+                    Leap.Vector leapVec = listener.trackLeapCursor(controller);
+                    int LeapX = 0;
+                    int LeapY = 0;
 
-                    LeapX = (int)leapVec.x;
-                    LeapY = (int)leapVec.y;
-
-                    string action = listener.get_action_type();
-
-                    switch (action)
+                    if (leapVec.x != 0 || leapVec.y != 0)
                     {
-                        case "normal":
-                            //Show normal cursor
-                            /*
-                            osd1.Show(new System.Drawing.Point(LeapX, LeapY), 155, System.Drawing.Color.Lime,
-                            new Font("Wingdings", 26f, System.Drawing.FontStyle.Regular),
-                            500, FloatingWindow.AnimateMode.ExpandCollapse,
-                            370, "l");
-                            */
-                            //MouseInput.MoveMouse(new System.Drawing.Point(LeapX,LeapY));
-                            
-                            listener.LeapMoveMouse(LeapX,LeapY);
 
-                            break;
+                        //System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.None;
 
-                        case "left_click":
-                            //Show left click trigger cursor
-                            /*
-                            osd1.Show(new System.Drawing.Point(LeapX, LeapY), 155, System.Drawing.Color.DarkGreen,
-                            new Font("Wingdings", 20f, System.Drawing.FontStyle.Regular),
-                            500, FloatingWindow.AnimateMode.ExpandCollapse,
-                            370, "l");
-                             */
-                            //MouseInput.MoveMouse(new System.Drawing.Point(LeapX, LeapY));                            
+                        LeapX = (int)leapVec.x;
+                        LeapY = (int)leapVec.y;
 
-                            //listener.LeapMoveMouse(LeapX, LeapY);
+                        string action = listener.get_action_type();
 
-                            break;
+                        switch (action)
+                        {
+                            case "normal":
+                                //Show normal cursor
+                                /*
+                                osd1.Show(new System.Drawing.Point(LeapX, LeapY), 155, System.Drawing.Color.Lime,
+                                new Font("Wingdings", 26f, System.Drawing.FontStyle.Regular),
+                                500, FloatingWindow.AnimateMode.ExpandCollapse,
+                                370, "l");
+                                */
+                                //MouseInput.MoveMouse(new System.Drawing.Point(LeapX,LeapY));
 
-                        case "right_click":
-                            osd1.Show(new System.Drawing.Point(LeapX, LeapY), 155, System.Drawing.Color.Red,
-                            new Font("Wingdings", 20f, System.Drawing.FontStyle.Regular),
-                            500, FloatingWindow.AnimateMode.ExpandCollapse,
-                            370, "l");
-                            break;
+                                listener.LeapMoveMouse(LeapX, LeapY);
+
+                                break;
+
+                            case "left_click":
+                                //Show left click trigger cursor
+                                /*
+                                osd1.Show(new System.Drawing.Point(LeapX, LeapY), 155, System.Drawing.Color.DarkGreen,
+                                new Font("Wingdings", 20f, System.Drawing.FontStyle.Regular),
+                                500, FloatingWindow.AnimateMode.ExpandCollapse,
+                                370, "l");
+                                 */
+                                //MouseInput.MoveMouse(new System.Drawing.Point(LeapX, LeapY));                            
+
+                                listener.LeapMoveMouse(LeapX, LeapY);
+
+                                break;
+
+                            case "right_click":
+                                /*
+                                osd1.Show(new System.Drawing.Point(LeapX, LeapY), 155, System.Drawing.Color.Red,
+                                new Font("Wingdings", 20f, System.Drawing.FontStyle.Regular),
+                                500, FloatingWindow.AnimateMode.ExpandCollapse,
+                                370, "l");
+                                 */
+
+
+                                break;
+
+
+                        }
+
+                        //string blank_cursor_location = @".\Resources\blank.cur";
+
+                        if (cursor_is_blank == false)
+                        {
+                            try
+                            {
+                                //default_cursor = LoadCursor(IntPtr.Zero,IDC_ARROW);
+
+                                //string blank_cursor_location = "C:\\Users\\AdminNUS\\Documents\\GitHub\\Leap_Interface\\LeapTouchPoint\\Resources\\blank.cur";
+                                //System.IntPtr hide_cursor = LoadCursorFromFile(blank_cursor_location);
+
+                                //SetSystemCursor(hide_cursor, OCR_NORMAL);
+                            }
+                            finally
+                            {
+                                //SetSystemCursor(default_cursor, OCR_NORMAL);
+                            }
+                        }
 
 
                     }
-
-                    //string blank_cursor_location = @".\Resources\blank.cur";
-
-                    if (cursor_is_blank == false)
+                    else
                     {
-                        try
-                        {
-                            //default_cursor = LoadCursor(IntPtr.Zero,IDC_ARROW);
+                        //string arrow_cursor_location = "C:\\Users\\AdminNUS\\Documents\\GitHub\\Leap_Interface\\LeapTouchPoint\\Resources\\aero_arrow.cur";
+                        //default_cursor = LoadCursorFromFile(arrow_cursor_location);
 
-                            //string blank_cursor_location = "C:\\Users\\AdminNUS\\Documents\\GitHub\\Leap_Interface\\LeapTouchPoint\\Resources\\blank.cur";
-                            //System.IntPtr hide_cursor = LoadCursorFromFile(blank_cursor_location);
+                        //int SPI_SETCURSORS = 0x0057;
+                        //SystemParametersInfo(SPI_SETCURSORS, 0, IntPtr.Zero, 0);
 
-                            //SetSystemCursor(hide_cursor, OCR_NORMAL);
-                        }
-                        finally
-                        {
-                            //SetSystemCursor(default_cursor, OCR_NORMAL);
-                        }
+                        //SetCursor(LoadCursor(IntPtr.Zero,IDC_ARROW));
+                        //SetSystemCursor(default_cursor, OCR_NORMAL);
+
                     }
-
-
-                }
+                } //END isLocked
                 else
                 {
-                    //string arrow_cursor_location = "C:\\Users\\AdminNUS\\Documents\\GitHub\\Leap_Interface\\LeapTouchPoint\\Resources\\aero_arrow.cur";
-                    //default_cursor = LoadCursorFromFile(arrow_cursor_location);
-
-                    //int SPI_SETCURSORS = 0x0057;
-                    //SystemParametersInfo(SPI_SETCURSORS, 0, IntPtr.Zero, 0);
-
-                    //SetCursor(LoadCursor(IntPtr.Zero,IDC_ARROW));
-                    //SetSystemCursor(default_cursor, OCR_NORMAL);
-                    
+                    osd1.Show(new System.Drawing.Point(500, 500), 155, System.Drawing.Color.DarkGreen,
+                                new Font("Arial", 20f, System.Drawing.FontStyle.Regular),
+                                20, FloatingWindow.AnimateMode.ExpandCollapse,
+                                10, "LOCKED");
                 }
             }
 

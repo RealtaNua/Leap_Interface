@@ -18,6 +18,22 @@ namespace LeapTouchPoint
 
     public class LeapListener : Listener
     {
+        //Constant config variables that should be put in a separate config file
+        int number_of_frames_before_locking = 200;
+
+        //Static Variables
+        public static Vector last_position = Vector.Zero;
+        public static Vector last_position_2 = Vector.Zero;
+        public static Vector last_position_3 = Vector.Zero;
+        private static Frame frame = new Frame();
+        public static long last_frame_Id = 0;
+        private static Gesture gesture_detected = null;
+        private static long unlock_frame_id = 0;
+        public static Boolean lock_status = false;
+        private static string action_type = "normal";
+        
+
+
         private Object thisLock = new Object();
 
         private void SafeWriteLine(String line)
@@ -36,10 +52,12 @@ namespace LeapTouchPoint
         public override void OnConnect(Controller controller)
         {
             SafeWriteLine("Connected");
+
+            // enable gesture recognition for screen locking
             controller.EnableGesture(Gesture.GestureType.TYPECIRCLE);
-            controller.EnableGesture(Gesture.GestureType.TYPEKEYTAP);
-            controller.EnableGesture(Gesture.GestureType.TYPESCREENTAP);
-            controller.EnableGesture(Gesture.GestureType.TYPESWIPE);
+            //controller.EnableGesture(Gesture.GestureType.TYPEKEYTAP);
+            //controller.EnableGesture(Gesture.GestureType.TYPESCREENTAP);
+            //controller.EnableGesture(Gesture.GestureType.TYPESWIPE);
             controller.SetPolicyFlags(Controller.PolicyFlag.POLICYBACKGROUNDFRAMES);
         }
 
@@ -57,17 +75,32 @@ namespace LeapTouchPoint
         public override void OnFrame(Controller controller)
         {
             // Get the most recent frame and report some basic information
-            Frame frame = controller.Frame();
+            frame = controller.Frame();
 
-//            SafeWriteLine("Frame id: " + frame.Id
-//                        + ", timestamp: " + frame.Timestamp
-//                        + ", hands: " + frame.Hands.Count
-//                        + ", fingers: " + frame.Fingers.Count);
+            SafeWriteLine("Frame id: " + frame.Id
+                        + ", timestamp: " + frame.Timestamp
+                        + ", hands: " + frame.Hands.Count
+                        + ", fingers: " + frame.Fingers.Count);
 //                        + ", tools: " + frame.Tools.Count
 //                       + ", gestures: " + frame.Gestures().Count);
 
             if (!frame.Fingers.Empty)
             {
+            //detect any gestures
+            GestureList gestures = frame.Gestures ();
+
+            for (int i = 0; i < gestures.Count; i++)
+            {
+                Gesture gesture = gestures[i];
+
+                switch (gesture.Type)
+                {
+                    case Gesture.GestureType.TYPECIRCLE:
+                        gesture_detected = gesture;
+                        break;
+                }
+            }
+            //END detect Gestures
 
                 // Check if the hand has any fingers
                 FingerList fingers = frame.Fingers;
@@ -90,11 +123,6 @@ namespace LeapTouchPoint
         }
 
         /********************************* Custom Methods ***********************************/
-        public static Vector last_position = Vector.Zero;
-        public static Vector last_position_2 = Vector.Zero;
-        public static Vector last_position_3 = Vector.Zero; 
-        public static long last_frame_Id = 0;
-        private static string action_type = "normal";
 
         public void set_action_type(string action)
         {
@@ -135,12 +163,17 @@ namespace LeapTouchPoint
 
         public Vector getStabilizedVector(Vector cursor_position, float cursor_velocity)
         {
-            SafeWriteLine("Cursor finger velocity: " + cursor_velocity + ", x: " + cursor_position.x + ", y: " + cursor_position.y);
-
+            if (cursor_position.y < 0)
+            {
+                cursor_position.y = 0;
+            } 
+            
             if (last_position.x != 0 || last_position.y != 0)
             {
                 if (IsAMatch(cursor_position, last_position))
                 {
+
+                    
                     if (cursor_velocity <= 7)
                     {
                         //cursor_position.x = (cursor_position.x + last_position.x + last_position_2.x + last_position_3.x) / 4;
@@ -150,11 +183,15 @@ namespace LeapTouchPoint
                     }
                     else
                     {
-                        cursor_position.x = (cursor_position.x + last_position.x) / 2;
-                        cursor_position.y = (cursor_position.y + last_position.y) / 2;
+                        //cursor_position.x = (cursor_position.x + last_position.x) / 2;
+                        //cursor_position.y = (cursor_position.y + last_position.y) / 2;
                     }
                 }
+
             }
+
+            //SafeWriteLine("Cursor finger velocity: " + cursor_velocity + ", x: " + cursor_position.x + ", y: " + cursor_position.y);
+
                 return cursor_position;
         }
 
@@ -200,6 +237,59 @@ namespace LeapTouchPoint
             }
 
             return fingers_on_left_hand;
+        }
+
+        public void gestureConfigCircle(Controller controller)
+        {
+            //controller.Config.SetFloat("Gesture.Circle.")
+        }
+
+        public Boolean lockOrUnlock()
+        {
+
+            if(gesture_detected != null)
+            {
+                CircleGesture circle = new CircleGesture(gesture_detected);
+
+                //circle.Progress indicates number of times circle is detected in a row
+                if (circle.Progress >= 1 && circle.DurationSeconds <= 0.5)
+                {
+                    // Calculate clock direction using the angle between circle normal and pointable
+                    if (circle.Pointable.Direction.AngleTo(circle.Normal) <= Math.PI / 4)
+                    {
+                        //Clockwise to unlock
+                            lock_status = false;
+                    }
+                    else
+                    {
+                        //anti-clockwise to lock
+                        lock_status = true;
+                    }
+                }
+
+                gesture_detected = null;
+            }
+
+            //Lock the screen if it exceeds configured number of frames
+            lockScreenAfterTimeout();
+
+            return lock_status;
+        }
+
+        //Lock the screen if duration exceeds configured number of frames (check number_of_frames_before_locking)
+        private void lockScreenAfterTimeout()
+        {
+            if (unlock_frame_id == 0 || frame.Fingers.Count > 0)
+            {
+                // Update unlock_frame_id during first unlock or whenever fingers are detected
+                unlock_frame_id = frame.Id;
+            }
+            //Lock screen if duration exceeded
+            else if ((frame.Id - unlock_frame_id) > number_of_frames_before_locking)
+            {
+                lock_status = true;
+                unlock_frame_id = 0;
+            }
         }
 
         public Vector trackLeapCursor(Controller controller)
@@ -307,9 +397,12 @@ namespace LeapTouchPoint
 
                                 case 2:
                                     //MouseInput.RightClick(LeapX, LeapY);
+
+                                    MouseInput.RightClick();
+
                                     if (get_action_type() == "normal" || get_action_type() == "left_click")
                                     {
-                                        //set_action_type("right_click");
+                                        set_action_type("right_click");
                                     }
                                     last_frame_Id = frame.Id;
                                     break;
@@ -327,7 +420,6 @@ namespace LeapTouchPoint
                     else if (MouseInput.MouseLeftClickStatus() == "Down") 
                     {
                         //Release Mouse left button for Drag & Drop once left hand finger no longer detected
-                         //MouseInput.LeftClickUp(LeapX,LeapY);
                          MouseInput.LeftClickUp();
                          CustomGesture.StopLeftFingerDrag();
 

@@ -101,5 +101,6 @@ namespace LeapTouchPoint
         {
             finger_is_dragged = "no";
         }
+
     }
 }
