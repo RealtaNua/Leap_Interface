@@ -9,6 +9,8 @@ using System;
 using System.Threading;
 using System.Reflection;
 using System.Collections;
+using System.Collections.Generic;
+using System.Configuration;
 using Leap;
 
 
@@ -18,8 +20,14 @@ namespace LeapTouchPoint
 
     public class LeapListener : Listener
     {
-        //Constant config variables that should be put in a separate config file
-        int number_of_frames_before_locking = 200;
+        //Constant config variables, these are updated at startup using the method setConfigFileParameters()
+        
+        private ConfigFileSettings configFile = new ConfigFileSettings();
+        static Dictionary<string, string> configDic = new Dictionary<string,string>();
+        static double yAxisMultiplier = 1;
+        static double fineSensitivityMultiplier = 1;
+        static int secondsBeforeLocking = 5;
+        static int number_of_frames_before_locking = 100;
 
         //Static Variables
         public static Vector last_position = Vector.Zero;
@@ -124,6 +132,16 @@ namespace LeapTouchPoint
 
         /********************************* Custom Methods ***********************************/
 
+        public void setConfigFileParameters()
+        {
+            configDic = configFile.getDefaultConfigParameters();
+
+            yAxisMultiplier = double.Parse(configDic["yAxisSlider"]);
+            fineSensitivityMultiplier = double.Parse(configDic["fineSensitivitySlider"]);
+            secondsBeforeLocking = int.Parse(configDic["secondsBeforeLocking"]);
+            number_of_frames_before_locking = (secondsBeforeLocking * 20);
+        }
+
         public void set_action_type(string action)
         {
             action_type = action;
@@ -173,8 +191,8 @@ namespace LeapTouchPoint
                 if (IsAMatch(cursor_position, last_position))
                 {
 
-                    
-                    if (cursor_velocity <= 7)
+
+                    if (cursor_velocity <= fineSensitivityMultiplier)
                     {
                         //cursor_position.x = (cursor_position.x + last_position.x + last_position_2.x + last_position_3.x) / 4;
                         //cursor_position.y = (cursor_position.y + last_position.y + last_position_2.y + last_position_3.y) / 4;
@@ -212,7 +230,7 @@ namespace LeapTouchPoint
                 if (xScreenIntersect.ToString() != "NaN")
                 {
                     finger_vector.x = (int)(xScreenIntersect * screen.WidthPixels);
-                    finger_vector.y = (int)(screen.HeightPixels - (yScreenIntersect * 2 * screen.HeightPixels));
+                    finger_vector.y = (int)(screen.HeightPixels - (yScreenIntersect * screen.HeightPixels * yAxisMultiplier));
                 }
                 //SafeWriteLine("yScreenIntersect / HeightPixels" + "/" + yScreenIntersect + "/" + screen.HeightPixels);
             }

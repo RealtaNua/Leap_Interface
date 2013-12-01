@@ -64,6 +64,7 @@
     <Reference Include="System">
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data">
       <Private>True</Private>
     </Reference>
@@ -111,6 +112,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ConfigFileSettings.cs" />
     <Compile Include="CustomGesture.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="MouseInput.cs" />
@@ -154,7 +156,9 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Myhand.cur" />

@@ -23,16 +23,19 @@
         <Label Content="Settings" BorderBrush="Transparent" Grid.ColumnSpan="2" Grid.Row="1" Background="Transparent" Foreground="Black" FontSize="16" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="20 10 0 0" VerticalAlignment="Center" Width="518" Margin="0,0,0,0.2"/>
 
         <Label Content="Y-axis Sensitivity" BorderBrush="Transparent" Grid.ColumnSpan="1" Grid.Row="2" Background="Transparent" Foreground="Black" FontSize="12" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="30 10 0 0" VerticalAlignment="Center" Width="518" Margin="0,0,0,0.2" />
-        <Slider Grid.Column="1" Grid.Row="2" HorizontalAlignment="Left" Width="365" Margin="10.4,10,0,0" VerticalAlignment="Top"/>
+        <Slider Name="yAxisSlider" Grid.Column="1" Grid.Row="2" Minimum="0.5" Maximum="3.5" IsMoveToPointEnabled="True" TickPlacement="BottomRight" TickFrequency="0.5" IsSnapToTickEnabled="True" HorizontalAlignment="Left" Width="219" Margin="10.4,9.6,0,0" VerticalAlignment="Top"/>
 
         <Label Content="Fine Sensitivity" BorderBrush="Transparent" Grid.ColumnSpan="1" Grid.Row="3" Background="Transparent" Foreground="Black" FontSize="12" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="30 10 0 0" VerticalAlignment="Center" Width="518" Margin="0,0,0,0.2" />
-        <Slider Grid.Column="1" Grid.Row="3" HorizontalAlignment="Left" Width="365" Margin="10.4,10,0,0" VerticalAlignment="Top"/>
+        <Slider Name="fineSensitivitySlider" Grid.Column="1" Grid.Row="3" Minimum="2" Maximum="10" IsMoveToPointEnabled="True" TickPlacement="BottomRight" TickFrequency="2" IsSnapToTickEnabled="True" HorizontalAlignment="Left" Width="219" Margin="10.4,9.8,0,0" VerticalAlignment="Top"/>
 
-        <Label Content="Duration B4 Lock" Grid.ColumnSpan="2" Grid.Row="4" BorderBrush="Transparent" Background="Transparent" Foreground="Black" FontSize="12" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="30 10 0 0" VerticalAlignment="Center" Width="518" Margin="0,2,0,23" Height="35" Grid.RowSpan="2" />
-        <TextBox Grid.Column="1" Grid.Row="5" HorizontalAlignment="Left" Width="30" Margin="10.4,10.2,0,27.8" VerticalAlignment="Center"/>
+        <Label Content="Duration B4 Lock" Grid.ColumnSpan="1" Grid.Row="4" BorderBrush="Transparent" Background="Transparent" Foreground="Black" FontSize="12" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="30 10 0 0" VerticalAlignment="Bottom" Width="518" Margin="0,0,0,0" Height="35" Grid.RowSpan="1" />
+        <TextBox Name="secondsBeforeLocking" Grid.Column="1" Grid.Row="4" HorizontalAlignment="Left" VerticalAlignment="Center" Width="30" Margin="10.4,5,0,6.8" />
+        <Label Content="seconds before locking" Grid.Column="2" Grid.Row="4" Margin="40 10 0 0" BorderBrush="Transparent" Background="Transparent" Foreground="Black" FontSize="12" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" VerticalAlignment="Center" Width="518" Height="35" Grid.RowSpan="1" />
+        <Button Name="applyAll" Content="Apply All" Grid.Column="1" Grid.Row="4" Height="22" Margin="169.4,12,159.4,11.6"/>
 
-        <Label Content="Tutorial" Grid.ColumnSpan="2" Grid.Row="5" BorderBrush="Transparent" Background="Transparent" Foreground="Black" FontSize="12" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="30 15 0 0" VerticalAlignment="Center" Width="518" Margin="0,30.2,0,-14.4" Height="37" />
-        <Button Content="Run Tutorial Again" Grid.Column="1" Grid.Row="5" HorizontalAlignment="Left" Margin="10.4,44.4,0,-6.4" VerticalAlignment="Center" Width="120" RenderTransformOrigin="-0.109,0.481"/>
+
+        <Label Content="Tutorial" Grid.ColumnSpan="1" Grid.Row="5" BorderBrush="Transparent" Background="Transparent" Foreground="Black" FontSize="12" FontWeight="Thin" FontFamily="Helvetica" HorizontalAlignment="Left" Padding="30 10 0 0" VerticalAlignment="Center" Width="518" Margin="0,0,0,0" Height="37" />
+        <Button Name="rerunTutorial" Content="Run Tutorial Again" Grid.Column="1" Grid.Row="5" HorizontalAlignment="Left" Margin="10.4,0,0,0" VerticalAlignment="Center" Width="120" Height="22" RenderTransformOrigin="-0.109,0.481"/>
 
     </Grid>
 </Window>

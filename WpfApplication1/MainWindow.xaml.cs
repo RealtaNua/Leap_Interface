@@ -15,6 +15,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Reflection;
+using System.Configuration;
 using Leap;
 
 
@@ -30,7 +31,7 @@ namespace LeapTouchPoint
     {
         FloatingOSDWindow osd1 = new FloatingOSDWindow();
 
-            //Create a sample listener and controller
+            //Create a Leap listener and controller
             static LeapListener listener = new LeapListener();
             static Controller controller = new Controller();
             
@@ -56,8 +57,8 @@ namespace LeapTouchPoint
             private const uint OCR_NORMAL = 32512;
             public static int IDC_ARROW = 32512;
             private static Boolean cursor_is_blank = false;
-
-
+            private ConfigFileSettings configFile = new ConfigFileSettings();
+        
         public MainWindow()
         {
 
@@ -67,11 +68,17 @@ namespace LeapTouchPoint
             //LeapTouchPointConfigWindow systraywindow = new LeapTouchPointConfigWindow();
             //systraywindow.Show();
 
-            SysTrayApp();
+            if (!isTrayIconStarted)
+            {
+                SysTrayApp();
+            }
 
+            loadConfigFileParameters();
+            listener.setConfigFileParameters();
+            
             System.Windows.Forms.Timer _timer = new Timer() { Interval = 1, Enabled = true };
 
-            // Have the sample listener receive events from the controller
+            // Have the listener receive events from the controller
             controller.AddListener(listener);
 
             try
@@ -90,20 +97,39 @@ namespace LeapTouchPoint
 
             this.StateChanged += ConfigWindow_OnMinimize;
 
+            applyAll.Click += applyAll_Click;
+
         }
 
 
         private static NotifyIcon trayIcon;
         private static System.Windows.Forms.ContextMenu trayMenu = new System.Windows.Forms.ContextMenu();
+        private Boolean isTrayIconStarted = false;
         private static Boolean isStopped = false;
         private static Boolean isExit = false;
+        private static Dictionary<string,string> configDic = new Dictionary<string,string>();
         //static LeapTouchPointConfigWindow config_window = new LeapTouchPointConfigWindow();
+
+        private void loadConfigFileParameters()
+        {
+            configDic = configFile.getDefaultConfigParameters();
+            fineSensitivitySlider.Value = double.Parse(configDic["fineSensitivitySlider"]);
+            yAxisSlider.Value = double.Parse(configDic["yAxisSlider"]);
+            secondsBeforeLocking.Text = configDic["secondsBeforeLocking"];
+        }
+
+        private void saveConfigFileParameters()
+        {
+            configDic["fineSensitivitySlider"] = fineSensitivitySlider.Value.ToString();
+            configDic["yAxisSlider"] = yAxisSlider.Value.ToString();
+            configDic["secondsBeforeLocking"] = secondsBeforeLocking.Text;
+            configFile.setConfigParameters(configDic);
+        }
 
         void SysTrayApp()
         {
 
-            // Create a simple tray menu with only one item.
-            //trayMenu = new System.Windows.Forms.ContextMenu();
+            // Create a simple tray menu
             trayMenu.MenuItems.Add("Start", OnStart);
             trayMenu.MenuItems.Add("Stop", OnStop);
             trayMenu.MenuItems.Add("Exit", OnExit);
@@ -128,6 +154,12 @@ namespace LeapTouchPoint
             trayIcon.MouseMove += new System.Windows.Forms.MouseEventHandler(icon_MouseMove);
             StateChanged += new EventHandler(MainWindow_StateChanged);
             */
+            isTrayIconStarted = true;
+        }
+
+        void applyAll_Click(object sender, EventArgs e)
+        {
+            saveConfigFileParameters();
         }
 
         void iconDoubleClick(object sender, EventArgs e)
@@ -135,9 +167,6 @@ namespace LeapTouchPoint
             this.Show();
 
             this.Activate();
-
-
-
         }
 
         void ConfigWindow_OnMinimize(object sender, EventArgs e)
@@ -198,6 +227,9 @@ namespace LeapTouchPoint
         void OnExit(object sender, EventArgs e)
         {
             isExit = true;
+            trayIcon.Dispose();
+            trayMenu.Dispose();
+
             System.Windows.Application.Current.Shutdown();
         }
 
@@ -311,7 +343,7 @@ namespace LeapTouchPoint
                         //SetSystemCursor(default_cursor, OCR_NORMAL);
 
                     }
-                } //END isLocked
+                } //END isLocked = False
                 else
                 {
                     osd1.Show(new System.Drawing.Point(500, 500), 155, System.Drawing.Color.DarkGreen,
