@@ -32,6 +32,8 @@ namespace LeapTouchPoint
             public const int MOUSEEVENTF_MOVE1 = 0x00000001;
             public const int MOUSEEVENTF_ABSOLUTE1 = 0x00008000;
 
+            public const int MOUSEEVENTF_WHEEL1 = 0x0000800;
+
             private static string leftClickStatus = "Up";
             public static Point last_clicked_point = new Point(0, 0);
 
@@ -104,6 +106,14 @@ namespace LeapTouchPoint
             {
                 return Cursor.Position;
             }
+
+//WORK IN PROGRESS//
+            public static void ScrollUpDown(double velocity)
+            {
+                int scroll_velocity = (int)(velocity * -1);
+                NativeMethods.mouse_event(MOUSEEVENTF_WHEEL1,0,0,scroll_velocity,0);
+            }
+//WORK IN PROGRESS//
 
             public static void ScrollWheel(int scrollSize)
             {
