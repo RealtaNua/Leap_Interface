@@ -80,11 +80,67 @@ namespace LeapTouchPoint
             SafeWriteLine("Exited");
         }
 
+        private long CurrentFrameTime;      // timestamp from the current frame
+        private long PreviousFrameTime;     // timestamp from the last frame
+        private long TimeDifference;        // difference between time stamps
+
+        const int FramePause = 10000;       // time to wait between frames in microsecond. 10000 microseconds = 0.1 second per frame
+ 
+
         public override void OnFrame(Controller controller)
         {
             // Get the most recent frame and report some basic information
             frame = controller.Frame();
 
+            CurrentFrameTime = frame.Timestamp;              // extract timestamp
+            TimeDifference = CurrentFrameTime - PreviousFrameTime;  // calculate difference
+
+            if (TimeDifference > FramePause)
+            {
+                // process frame
+                if (!frame.Fingers.Empty)
+                {
+                    //detect any gestures
+                    GestureList gestures = frame.Gestures();
+
+                    for (int i = 0; i < gestures.Count; i++)
+                    {
+                        Gesture gesture = gestures[i];
+
+                        switch (gesture.Type)
+                        {
+                            case Gesture.GestureType.TYPECIRCLE:
+                                gesture_detected = gesture;
+                                break;
+                        }
+                    }
+                    //END detect Gestures
+
+                    // Check if the hand has any fingers
+                    FingerList fingers = frame.Fingers;
+                    if (!fingers.Empty)
+                    {
+                        // Calculate the average finger tip position
+                        Vector finger_Pos = Vector.Zero;
+
+                        finger_Pos = getFingerVector(controller, fingers.Rightmost);
+
+                        //                    SafeWriteLine("Device sees " + fingers.Count
+                        //                                + " finger(s), cursor finger position: " + finger_Pos);
+                    }
+                }
+                if (!frame.Hands.Empty || !frame.Gestures().Empty)
+                {
+                    //SafeWriteLine("");
+                }
+
+
+                PreviousFrameTime = CurrentFrameTime;
+            }
+            else
+            {
+                // ignore frame
+            }
             SafeWriteLine("Frame id: " + frame.Id
                         + ", timestamp: " + frame.Timestamp
                         + ", hands: " + frame.Hands.Count
@@ -92,41 +148,6 @@ namespace LeapTouchPoint
 //                        + ", tools: " + frame.Tools.Count
 //                       + ", gestures: " + frame.Gestures().Count);
 
-            if (!frame.Fingers.Empty)
-            {
-            //detect any gestures
-            GestureList gestures = frame.Gestures ();
-
-            for (int i = 0; i < gestures.Count; i++)
-            {
-                Gesture gesture = gestures[i];
-
-                switch (gesture.Type)
-                {
-                    case Gesture.GestureType.TYPECIRCLE:
-                        gesture_detected = gesture;
-                        break;
-                }
-            }
-            //END detect Gestures
-
-                // Check if the hand has any fingers
-                FingerList fingers = frame.Fingers;
-                if (!fingers.Empty)
-                {
-                    // Calculate the average finger tip position
-                    Vector finger_Pos = Vector.Zero;
-                    
-                    finger_Pos = getFingerVector(controller,fingers.Rightmost);
-                    
-//                    SafeWriteLine("Device sees " + fingers.Count
-//                                + " finger(s), cursor finger position: " + finger_Pos);
-                }
-            }
-            if (!frame.Hands.Empty || !frame.Gestures().Empty)
-            {
-                //SafeWriteLine("");
-            }
 
         }
 
@@ -313,6 +334,28 @@ namespace LeapTouchPoint
 
         //WORK IN PROGRESS//
 
+        public Boolean scrollUpDown(Finger right_finger)
+        {
+            Boolean return_status = false;
+
+            if (right_finger.TipVelocity.y != 0)
+            {
+                MouseInput.ScrollUpDown(right_finger.TipVelocity.y);
+                return_status = true;
+            }
+
+            return return_status;
+        }
+
+        public double cursorFingerVelocity(Vector pos1, Vector pos2, Vector pos3, Vector pos4)
+        {
+            double fingerVelocity = 0;
+
+            fingerVelocity = (pos1.y - pos2.y) / 0.1;
+
+            return fingerVelocity;
+        }
+
         public Boolean scrollUpDown(Controller controller)
         {
             Boolean return_status = false;
@@ -345,21 +388,32 @@ namespace LeapTouchPoint
             Frame frame = controller.Frame();
             Vector cursor_position = Vector.Zero;
 
+            Boolean fingerTouched = false;
+
             //SafeWriteLine("last_frame_id_before: " + last_frame_Id);
-            if (frame.Hands.Count > 0)
-            {
-                scrollUpDown(controller);
-            } else
-            {
+
+
+
                         
 
                 // Check if the hand has any fingers
                 FingerList fingers = frame.Fingers;
                 if (!fingers.Empty)
                 {
+
                     Finger right_finger = fingers.Rightmost;
                     Vector right_finger_position = getFingerVector(controller, right_finger);
                     float right_finger_velocity = right_finger.TipVelocity.Magnitude;
+
+                    switch (right_finger.TouchZone)
+                    {
+
+                        case Pointable.Zone.ZONETOUCHING:
+                            //scrollUpDown(controller);
+                            fingerTouched = true;
+                            SafeWriteLine("finger touched zone");
+                            break;
+                    }
 
                     Boolean is_matched = IsAMatch(right_finger_position, last_position);
 
@@ -395,6 +449,13 @@ namespace LeapTouchPoint
                     LeapX = (int)cursor_position.x;
                     LeapY = (int)cursor_position.y;
 
+                    if (fingerTouched)
+                    {
+                        //scrollUpDown(controller);
+                        scrollUpDown(right_finger);
+                        cursor_position = last_position;
+                    } else
+                    {
                         if (fingers.Count > 1 && is_matched)
                         {
 
@@ -494,9 +555,11 @@ namespace LeapTouchPoint
 
 
 
-                    last_position = cursor_position;
-                    last_position_2 = last_position;
-                    last_position_3 = last_position_2;
+                        last_position = cursor_position;
+                        last_position_2 = last_position;
+                        last_position_3 = last_position_2;
+
+                    } //End ScrollUpDown
                 }
                 else
                 {
@@ -509,7 +572,7 @@ namespace LeapTouchPoint
 
                 // SafeWriteLine("last_frame_id_after: " + last_frame_Id);
 
-            } //End ScrollUpDown
+
 
             return cursor_position;
         } // End TrackLeapCursor() function
